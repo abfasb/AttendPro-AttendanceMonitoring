@@ -18,7 +18,7 @@ AttendPro is an advanced and user-friendly attendance monitoring system that uti
 ## Tech Stack
 
 - **Frontend**:
-  - React.js
+  - React.js + TypeScript
   - Tailwind CSS
 - **Backend**:
   - Node.js with Express.js Or Firebase (BAAS)
