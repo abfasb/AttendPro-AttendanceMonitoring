@@ -74,8 +74,7 @@ AttendPro is an advanced and user-friendly attendance monitoring system that uti
    ```
 
 5. **Run the Application**
-   - Frontend: `npm start` (runs on `http://localhost:3000`)
-   - Backend: `npm start` (runs on `http://localhost:5000`)
+   - Client: `npm start` (runs on `http://localhost:5173`)
 
 ---
 
