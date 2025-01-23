@@ -1,9 +1,8 @@
 import React from "react";
 
-const InstructorPanel = () => {
+const InstructorPage : React.FC = () => {
   return (
     <div className="bg-gray-50 min-h-screen flex">
-      {/* Sidebar */}
       <div className="w-72 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-8 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-center mb-10">
@@ -74,9 +73,7 @@ const InstructorPanel = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-12 space-y-10 overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-3xl font-bold text-gray-800">Welcome, Instructor</h1>
           <button className="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-700 transition duration-300">
@@ -84,7 +81,6 @@ const InstructorPanel = () => {
           </button>
         </div>
 
-        {/* Dashboard Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
             <h3 className="text-xl font-semibold text-gray-700 mb-3">Today's Attendance</h3>
@@ -120,7 +116,6 @@ const InstructorPanel = () => {
           </div>
         </div>
 
-        {/* QR Code Scanning */}
         <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Scan QR Code for Attendance</h3>
           <button className="bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-indigo-500 transition duration-300">
@@ -138,12 +133,10 @@ const InstructorPanel = () => {
                 <span>Jane Smith</span>
                 <span className="bg-red-200 text-red-700 py-1 px-3 rounded-full">Absent</span>
               </li>
-              {/* Add more attendance logs dynamically */}
             </ul>
           </div>
         </div>
 
-        {/* Class Attendance Overview */}
         <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Class Attendance Overview</h3>
           <table className="min-w-full table-auto">
@@ -169,7 +162,6 @@ const InstructorPanel = () => {
                   <button className="text-indigo-600 hover:text-indigo-500">View Details</button>
                 </td>
               </tr>
-              {/* More rows */}
             </tbody>
           </table>
         </div>
@@ -178,4 +170,4 @@ const InstructorPanel = () => {
   );
 };
 
-export default InstructorPanel;
+export default InstructorPage;
