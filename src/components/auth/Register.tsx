@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { db, auth } from '../../config/config';
 import { collection, addDoc } from 'firebase/firestore';
 import bcrypt from 'bcryptjs'
-import Img from '../assets/img/logo4.png'
+import Img from '../../assets/img/logo1.jpg';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
@@ -69,11 +69,7 @@ const Register : React.FC = () => {
   return (
     <section
     className="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center"
-    style={{
-      backgroundImage: `url(${Img})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }}
+   
   >
     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
       <h1 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">Create an Account</h1>
