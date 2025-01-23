@@ -1,6 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
+import ReactQRCode from "react-qr-code"; // Import react-qr-code
 
-const InstructorPage : React.FC = () => {
+const InstructorPage = () => {
+  const [qrData, setQrData] = useState(""); 
+  const [showQRCode, setShowQRCode] = useState(false); 
+
+  const generateQRCode = () => {
+    const currentTime = new Date().toISOString(); 
+    const attendanceData = {
+      event: "class123", 
+      time: currentTime,
+      status: "pending",
+    };
+    
+    setQrData(JSON.stringify(attendanceData));  
+    setShowQRCode(true);
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen flex">
       <div className="w-72 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-8 flex flex-col justify-between">
@@ -81,46 +97,21 @@ const InstructorPage : React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <h3 className="text-xl font-semibold text-gray-700 mb-3">Today's Attendance</h3>
-            <p className="text-3xl font-bold text-indigo-600">22/30 Students Present</p>
-            <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-gray-500">Last Updated: 10 mins ago</div>
-              <div className="bg-indigo-100 p-4 rounded-full text-indigo-500 shadow-md">
-                <span className="text-3xl">📊</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <h3 className="text-xl font-semibold text-gray-700 mb-3">Upcoming Classes</h3>
-            <p className="text-2xl font-medium text-gray-700">Math 101, 2:00 PM</p>
-            <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-gray-500">Next Class: 30 mins</div>
-              <div className="bg-green-100 p-4 rounded-full text-green-500 shadow-md">
-                <span className="text-3xl">📅</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <h3 className="text-xl font-semibold text-gray-700 mb-3">Attendance Insights</h3>
-            <p className="text-2xl font-medium text-gray-700">View Trends & Reports</p>
-            <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-gray-500">Weekly Insights</div>
-              <div className="bg-yellow-100 p-4 rounded-full text-yellow-500 shadow-md">
-                <span className="text-3xl">📈</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
           <h3 className="text-xl font-semibold text-gray-700 mb-4">Scan QR Code for Attendance</h3>
-          <button className="bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-indigo-500 transition duration-300">
+          
+          <button
+            onClick={generateQRCode}
+            className="bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-indigo-500 transition duration-300"
+          >
             Generate QR Code
           </button>
+
+          {showQRCode && qrData && (
+            <div className="mt-8 flex justify-center">
+              <ReactQRCode value={qrData} size={256} />
+            </div>
+          )}
 
           <div className="mt-8">
             <h4 className="text-lg font-semibold text-gray-700">Real-Time Attendance Logs</h4>
