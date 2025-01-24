@@ -26,7 +26,6 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    // Validation checks
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
       alert('All fields are required');
       return;
