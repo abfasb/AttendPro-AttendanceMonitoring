@@ -1,39 +1,93 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface NavBarProps {
-    onSelect: (selectedItem: string) => void;
+  onSelect: (section: string) => void;
+  activeSection: string;
 }
 
-const NavBar :React.FC<NavBarProps> = ({ onSelect}) => {
+const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navItems = [
+    "Dashboard",
+    "Attendance Overview",
+    "Scan QR Code",
+    "Student List",
+    "Reports & Insights",
+    "Settings",
+  ];
+
   return (
-    <div className="w-72 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-8 flex flex-col justify-between">
-      <div>
-        <div className="flex items-center justify-center mb-10">
-          <img
-            src="profile-pic.jpg"
-            alt="Instructor"
-            className="w-20 h-20 rounded-full border-4 border-white shadow-md"
-          />
-        </div>
-        <h2 className="text-3xl font-bold text-center mb-4">Instructor Panel</h2>
-        <nav>
-          <ul className="space-y-6">
-            {["Dashboard", "Attendance Overview", "Scan QR Code", "Student List", "Reports & Insights", "Settings"].map(
-              (item) => (
-                <li key={item}>
-                  <button
-                    onClick={() => onSelect(item)}
-                    className="block w-full py-3 px-5 rounded-lg text-lg font-medium hover:bg-indigo-700 transition duration-300 text-left"
-                  >
-                    {item}
-                  </button>
-                </li>
-              )
-            )}
-          </ul>
-        </nav>
+    <div className="bg-gradient-to-b from-indigo-600 to-purple-700 text-white p-4 md:p-8 flex flex-col justify-between md:w-72">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between md:hidden">
+        <h2 className="text-xl font-bold">Instructor Panel</h2>
+        <button
+          className="text-white focus:outline-none"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16m-7 6h7"
+              />
+            </svg>
+          )}
+        </button>
       </div>
-      <div>
+
+      <div
+        className={`mt-6 space-y-4 transition-all duration-300 md:block ${
+          isMenuOpen ? "block" : "hidden"
+        }`}
+      >
+        <ul>
+          {navItems.map((item) => (
+            <li key={item}>
+              <button
+                onClick={() => {
+                  onSelect(item);
+                  setIsMenuOpen(false);
+                }}
+                className={`block w-full py-3 px-5 rounded-lg text-lg font-medium transition duration-300 text-left 
+                  ${
+                    activeSection === item
+                      ? "bg-white text-indigo-700 shadow-md"
+                      : "bg-indigo-600 hover:bg-indigo-500"
+                  }`}
+              >
+                {item}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6 md:mt-0">
         <button className="bg-red-600 text-white w-full py-3 rounded-lg hover:bg-red-500 transition duration-300">
           Logout
         </button>
