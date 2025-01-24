@@ -9,7 +9,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPassword, loginError }) => {
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(true); // Open the role modal by default
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(true);
   const [userRole, setUserRole] = useState<'student' | 'instructor' | null>(null);
   const [formData, setFormData] = useState({
     username: '',
@@ -25,7 +25,7 @@ const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPa
 
   const handleRoleSelect = (role: 'student' | 'instructor') => {
     setUserRole(role);
-    setIsRoleModalOpen(false); // Close the role modal
+    setIsRoleModalOpen(false); 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,10 +34,8 @@ const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPa
     const signInWithUserAndPass = await signInWithUsernameAndPassword(username, password);
 
     if (signInWithUserAndPass) {
-      // Show a success toast
       toast.success('Login successful!', { position: "top-right", autoClose: 5000 });
     } else {
-      // Show an error toast if login failed
       toast.error('Invalid credentials, please try again.', { position: "top-right", autoClose: 5000 });
     }
   };
