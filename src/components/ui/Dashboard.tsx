@@ -1,30 +1,34 @@
 import React, { useState, useEffect } from "react";
-import ReactQRCode from "react-qr-code";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../../config/config";
-import DataTable from "react-data-table-component"; // Install with npm install react-data-table-component
+import DataTable, { TableColumn } from "react-data-table-component";
 import html2canvas from "html2canvas";
+import { db } from "../../config/config";
 
-// Dashboard Component
+interface QRCodeItem {
+  id?: string;
+  title: string;
+  createdAt: string;
+  expiresAt: string;
+  status: string;
+}
+
 const Dashboard: React.FC = () => {
-  const [qrTitle, setQrTitle] = useState("");
-  const [expirationTime, setExpirationTime] = useState("");
-  const [qrData, setQrData] = useState("");
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [qrList, setQrList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [qrTitle, setQrTitle] = useState<string>("");
+  const [expirationTime, setExpirationTime] = useState<string>("");
+  const [qrData, setQrData] = useState<string>("");
+  const [showQRCode, setShowQRCode] = useState<boolean>(false);
+  const [qrList, setQrList] = useState<QRCodeItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // Firebase Firestore reference
   const qrCollectionRef = collection(db, "qrCodes");
 
-  // Fetch QR codes from Firestore
   const fetchQRCodes = async () => {
     setLoading(true);
     const data = await getDocs(qrCollectionRef);
     const qrItems = data.docs.map((doc) => ({
-      ...doc.data(),
       id: doc.id,
-    }));
+      ...doc.data(),
+    })) as QRCodeItem[];
     setQrList(qrItems);
     setLoading(false);
   };
@@ -33,7 +37,6 @@ const Dashboard: React.FC = () => {
     fetchQRCodes();
   }, []);
 
-  // Generate QR Code and save to Firestore
   const generateQRCode = async () => {
     if (!qrTitle || !expirationTime) {
       alert("Please provide a title and expiration time.");
@@ -41,7 +44,7 @@ const Dashboard: React.FC = () => {
     }
 
     const currentTime = new Date().toISOString();
-    const qrPayload = {
+    const qrPayload: QRCodeItem = {
       title: qrTitle,
       createdAt: currentTime,
       expiresAt: expirationTime,
@@ -50,20 +53,18 @@ const Dashboard: React.FC = () => {
     setQrData(JSON.stringify(qrPayload));
     setShowQRCode(true);
 
-    // Save to Firestore
     try {
       await addDoc(qrCollectionRef, qrPayload);
       alert("QR Code saved successfully!");
       setQrTitle("");
       setExpirationTime("");
-      fetchQRCodes(); // Refresh table
+      fetchQRCodes();
     } catch (err) {
       console.error("Error saving QR Code:", err);
     }
   };
 
-  // Download QR Code
-  const downloadQRCode = async (data) => {
+  const downloadQRCode = async (data: QRCodeItem) => {
     const qrCodeElement = document.getElementById(`qr-code-${data.id}`);
     if (qrCodeElement) {
       const canvas = await html2canvas(qrCodeElement);
@@ -74,8 +75,8 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Delete QR Code
-  const deleteQRCode = async (id) => {
+  const deleteQRCode = async (id: string | undefined) => {
+    if (!id) return;
     try {
       await deleteDoc(doc(db, "qrCodes", id));
       alert("QR Code deleted successfully!");
@@ -85,8 +86,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // React Data Table Columns
-  const columns = [
+  const columns: TableColumn<QRCodeItem>[] = [
     { name: "Title", selector: (row) => row.title, sortable: true },
     { name: "Created At", selector: (row) => new Date(row.createdAt).toLocaleString() },
     { name: "Expires At", selector: (row) => new Date(row.expiresAt).toLocaleString() },
@@ -142,13 +142,7 @@ const Dashboard: React.FC = () => {
             Generate QR Code
           </button>
         </div>
-        {showQRCode && qrData && (
-          <div className="mt-6 flex flex-col items-center">
-            <div id={`qr-code`} className="bg-white p-4 rounded-lg shadow-lg">
-              <ReactQRCode value={qrData} size={200} />
-            </div>
-          </div>
-        )}
+        
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -159,7 +153,6 @@ const Dashboard: React.FC = () => {
           progressPending={loading}
           pagination
           highlightOnHover
-          defaultSortField="createdAt"
           className="bg-white"
         />
       </div>
