@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import DataTable, { TableColumn } from "react-data-table-component";
 import html2canvas from "html2canvas";
-import { db } from "../../config/config";
+import { db, storage } from "../../config/config"; // Import Firebase Storage
 
 interface QRCodeItem {
   id?: string;
@@ -10,6 +11,7 @@ interface QRCodeItem {
   createdAt: string;
   expiresAt: string;
   status: string;
+  imageUrl?: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -37,12 +39,13 @@ const Dashboard: React.FC = () => {
     fetchQRCodes();
   }, []);
 
+ 
   const generateQRCode = async () => {
     if (!qrTitle || !expirationTime) {
       alert("Please provide a title and expiration time.");
       return;
     }
-
+  
     const currentTime = new Date().toISOString();
     const qrPayload: QRCodeItem = {
       title: qrTitle,
@@ -52,28 +55,37 @@ const Dashboard: React.FC = () => {
     };
     setQrData(JSON.stringify(qrPayload));
     setShowQRCode(true);
-
+  
     try {
-      await addDoc(qrCollectionRef, qrPayload);
-      alert("QR Code saved successfully!");
-      setQrTitle("");
-      setExpirationTime("");
-      fetchQRCodes();
+      const qrCodeElement = document.getElementById("qr-code-preview");
+      if (qrCodeElement) {
+        qrCodeElement.style.backgroundColor = "rgb(0, 0, 0)"; // Fallback to a compatible color
+  
+        const canvas = await html2canvas(qrCodeElement);
+  
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const storageRef = ref(storage, `qrCodes/${qrTitle}_${currentTime}.png`);
+            const uploadTask = await uploadBytes(storageRef, blob); // Use the Blob here
+            const downloadUrl = await getDownloadURL(uploadTask.ref);
+  
+            qrPayload.imageUrl = downloadUrl;
+            await addDoc(qrCollectionRef, qrPayload);
+            alert("QR Code saved successfully!");
+            setQrTitle("");
+            setExpirationTime("");
+            fetchQRCodes();
+          } else {
+            console.error("Failed to generate Blob from canvas");
+          }
+        });
+      }
     } catch (err) {
       console.error("Error saving QR Code:", err);
     }
   };
-
-  const downloadQRCode = async (data: QRCodeItem) => {
-    const qrCodeElement = document.getElementById(`qr-code-${data.id}`);
-    if (qrCodeElement) {
-      const canvas = await html2canvas(qrCodeElement);
-      const link = document.createElement("a");
-      link.download = `${data.title}_qr_code.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    }
-  };
+  
+  
 
   const deleteQRCode = async (id: string | undefined) => {
     if (!id) return;
@@ -86,6 +98,13 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const downloadQRCode = async (url: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "qr_code.png";
+    link.click();
+  };
+
   const columns: TableColumn<QRCodeItem>[] = [
     { name: "Title", selector: (row) => row.title, sortable: true },
     { name: "Created At", selector: (row) => new Date(row.createdAt).toLocaleString() },
@@ -95,7 +114,7 @@ const Dashboard: React.FC = () => {
       cell: (row) => (
         <div className="flex space-x-2">
           <button
-            onClick={() => downloadQRCode(row)}
+            onClick={() => downloadQRCode(row.imageUrl!)}
             className="bg-green-600 text-white px-4 py-1 rounded-lg hover:bg-green-500"
           >
             Download
@@ -142,7 +161,6 @@ const Dashboard: React.FC = () => {
             Generate QR Code
           </button>
         </div>
-        
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -156,6 +174,17 @@ const Dashboard: React.FC = () => {
           className="bg-white"
         />
       </div>
+
+      {/* QR Code Display */}
+      {showQRCode && qrData && (
+        <div className="mt-6 p-4 bg-white rounded shadow">
+          <h3 className="text-xl font-semibold text-gray-700">Generated QR Code</h3>
+          <div id="qr-code-preview" className="w-48 h-48 bg-gray-200 mt-4 flex justify-center items-center">
+            {/* Preview your QR code here */}
+            <img src={`data:image/png;base64,${qrData}`} alt="QR Code" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,8 +1,11 @@
 import React from 'react'
+import StudentPanel from '../../components/ui/StudentPanel'
 
 const StudentPage : React.FC = () => {
   return (
-    <div>StudentPage</div>
+    <>
+        <StudentPanel />
+    </>
   )
 }
 
