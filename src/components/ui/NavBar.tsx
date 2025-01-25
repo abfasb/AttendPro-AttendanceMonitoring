@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FaTachometerAlt, FaChartBar, FaQrcode, FaUsers, FaFileAlt, FaCog } from "react-icons/fa"; // Importing icons from React Icons
 
 interface NavBarProps {
   onSelect: (section: string) => void;
@@ -9,17 +10,16 @@ const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    "Dashboard",
-    "Attendance Overview",
-    "Scan QR Code",
-    "Student List",
-    "Reports & Insights",
-    "Settings",
+    { name: "Dashboard", icon: <FaTachometerAlt className="h-5 w-5" /> },
+    { name: "Attendance Overview", icon: <FaChartBar className="h-5 w-5" /> },
+    { name: "Scan QR Code", icon: <FaQrcode className="h-5 w-5" /> },
+    { name: "Student List", icon: <FaUsers className="h-5 w-5" /> },
+    { name: "Reports & Insights", icon: <FaFileAlt className="h-5 w-5" /> },
+    { name: "Settings", icon: <FaCog className="h-5 w-5" /> },
   ];
 
   return (
-    <div className="bg-gradient-to-b from-indigo-600 to-purple-700 text-white p-4 md:p-8 flex flex-col justify-between md:w-72">
-      {/* Mobile Header */}
+    <div className="bg-gradient-to-b from-red-600 to-purple-700 text-white p-4 md:p-8 flex flex-col justify-between md:w-72">
       <div className="flex items-center justify-between md:hidden">
         <h2 className="text-xl font-bold">Instructor Panel</h2>
         <button
@@ -65,33 +65,29 @@ const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
           isMenuOpen ? "block" : "hidden"
         }`}
       >
-        <ul>
+        <ul className="space-y-4">
           {navItems.map((item) => (
-            <li key={item}>
+            <li key={item.name}>
               <button
                 onClick={() => {
-                  onSelect(item);
+                  onSelect(item.name);
                   setIsMenuOpen(false);
                 }}
-                className={`block w-full py-3 px-5 rounded-lg text-lg font-medium transition duration-300 text-left 
+                className={`flex items-center space-x-4 w-full py-3 px-5 rounded-lg text-lg font-medium transition duration-300 text-left 
                   ${
-                    activeSection === item
+                    activeSection === item.name
                       ? "bg-white text-indigo-700 shadow-md"
-                      : "bg-indigo-600 hover:bg-indigo-500"
+                      : "hover:bg-indigo-500"
                   }`}
               >
-                {item}
+                <span>{item.icon}</span>
+                <span>{item.name}</span>
               </button>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="mt-6 md:mt-0">
-        <button className="bg-red-600 text-white w-full py-3 rounded-lg hover:bg-red-500 transition duration-300">
-          Logout
-        </button>
-      </div>
     </div>
   );
 };
