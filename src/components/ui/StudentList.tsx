@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../../config/config"; // Replace with your Firebase config import
+import { db } from "../../config/config"; 
 import { collection, getDocs } from "firebase/firestore";
 
 interface Student {
