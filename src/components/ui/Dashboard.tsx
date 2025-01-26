@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import DataTable, { TableColumn } from "react-data-table-component";
-import QRCode from "qrcode"; // Import the library
+import QRCode from "qrcode"; 
 import { db, storage } from "../../config/config";
 
 interface QRCodeItem {
@@ -173,7 +173,6 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* QR Code Display */}
       {showQRCode && qrCodeUrl && (
         <div className="mt-6 p-4 bg-white rounded shadow">
           <h3 className="text-xl font-semibold text-gray-700">Generated QR Code</h3>
