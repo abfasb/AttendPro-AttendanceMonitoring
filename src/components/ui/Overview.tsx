@@ -16,13 +16,13 @@ interface AttendanceRecord {
   id: string;
   studentId: string;
   studentName: string;
-  qrData: string;
+  qrCodeId: string;
   createdAt: string;
 }
 
 interface UserData {
   uid: string;
-  displayName?: string;
+  firstName?: string;
   email?: string;
   photoURL?: string;
 }
@@ -34,7 +34,6 @@ const Overview: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Fetch all QR codes from Firestore
   const fetchQRCodes = async () => {
     try {
       const qrCollectionRef = collection(db, "qrCodes");
@@ -49,37 +48,39 @@ const Overview: React.FC = () => {
     }
   };
 
-  // Fetch attendance records and corresponding student names
   const fetchAttendanceRecords = async (qrCodeId: string) => {
     try {
       setLoading(true);
       const attendanceCollectionRef = collection(db, "attendances");
-      const q = query(attendanceCollectionRef, where("qrData", "==", qrCodeId));
+      const q = query(
+        attendanceCollectionRef,
+        where("qrCodeId", "==", qrCodeId)
+      );
       const snapshot = await getDocs(q);
-
-      const recordsPromises = snapshot.docs.map(async (attendanceDoc) => { // Changed parameter name
-        const data = attendanceDoc.data(); // Changed to use renamed parameter
+  
+      const recordsPromises = snapshot.docs.map(async (attendanceDoc) => {
+        const data = attendanceDoc.data();
+        console.log(data);
         
-        // Get user data from users collection
         let studentName = "Unknown Student";
         try {
-          const userRef = doc(db, "users", data.studentId); // Properly use doc reference
+          const userRef = doc(db, "users", data.studentId);
           const userDoc = await getDoc(userRef);
           const userData = userDoc.data() as UserData;
-          studentName = userData?.displayName || studentName;
+          studentName = data.studentName || studentName;
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
-
+  
         return {
-          id: attendanceDoc.id, // Changed to use renamed parameter
+          id: attendanceDoc.id,
           studentId: data.studentId,
           studentName,
-          qrData: data.qrData,
+          qrCodeId: data.qrCodeId,
           createdAt: data.createdAt
         } as AttendanceRecord;
       });
-
+  
       const records = await Promise.all(recordsPromises);
       setAttendanceRecords(records);
     } catch (err) {
@@ -89,7 +90,6 @@ const Overview: React.FC = () => {
     }
   };
 
-  // Handle QR code click to show attendance
   const handleQRCodeClick = async (qrCode: QRCode) => {
     setSelectedQRCode(qrCode);
     await fetchAttendanceRecords(qrCode.id);

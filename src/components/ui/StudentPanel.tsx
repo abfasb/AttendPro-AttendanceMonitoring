@@ -43,17 +43,21 @@ const StudentPanel: React.FC = () => {
   const handleScan = (data: string | null) => {
     if (data) {
       try {
+        // Validate QR data format
+        const qrData = JSON.parse(data);
+        if (!qrData.id) throw new Error("Invalid QR code format");
+        
         if (data.length > 0) {
           setAttendance({
             studentName: `${userData.displayName}`,
-            qrData: data,
+            qrData: data, 
             createdAt: new Date().toISOString(),
           });
           setToastMessage("QR Code scanned successfully!");
           setError("");
         }
       } catch (err) {
-        setError("Invalid QR Code format");
+        setError("Invalid QR Code format - please scan a valid attendance code");
       }
     }
   };
@@ -93,13 +97,19 @@ const StudentPanel: React.FC = () => {
       setError("Please scan a valid QR code first");
       return;
     }
-
+  
     try {
-      // Check for existing attendance
+      let qrCodeData;
+      try {
+        qrCodeData = JSON.parse(attendance.qrData);
+      } catch (error) {
+        throw new Error("Invalid QR code format");
+      }
+  
       const attendanceQuery = query(
         qrCollectionRef,
         where("studentId", "==", userData.uid),
-        where("qrData", "==", attendance.qrData)
+        where("qrCodeId", "==", qrCodeData.id) 
       );
       
       const querySnapshot = await getDocs(attendanceQuery);
@@ -107,24 +117,21 @@ const StudentPanel: React.FC = () => {
         setError("You've already submitted attendance for this session");
         return;
       }
-
-      // Save new attendance
+  
       await addDoc(qrCollectionRef, {
-        ...attendance,
+        studentName: userData.displayName,
         studentId: userData.uid,
+        qrCodeId: qrCodeData.id,
         createdAt: new Date().toISOString()
       });
       
       setSuccess("Attendance recorded successfully!");
       setToastMessage("Attendance saved to database!");
       setAttendance({ studentName: "", qrData: "", createdAt: "" });
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(""), 3000);
-
+  
     } catch (err) {
       console.error("Error saving attendance:", err);
-      setError("Failed to save attendance data.");
+      setError(err instanceof Error ? err.message : "Failed to save attendance data.");
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import DataTable, { TableColumn } from "react-data-table-component";
 import QRCode from "qrcode";
@@ -46,16 +46,28 @@ const Dashboard: React.FC = () => {
       toast.error("Please provide a title and expiration time.");
       return;
     }
-
+  
     const currentTime = new Date().toISOString();
-    const qrPayload: QRCodeItem = {
-      title: qrTitle,
-      createdAt: currentTime,
-      expiresAt: expirationTime,
-      status: "active",
-    };
-
+  
     try {
+      // 1. First create the Firestore document to get the ID
+      const qrDocRef = await addDoc(qrCollectionRef, {
+        title: qrTitle,
+        createdAt: currentTime,
+        expiresAt: expirationTime,
+        status: "active",
+        imageUrl: "" // Temporary empty value
+      });
+  
+      // 2. Create QR payload WITH THE DOCUMENT ID
+      const qrPayload = {
+        id: qrDocRef.id, // This is the critical missing piece
+        title: qrTitle,
+        createdAt: currentTime,
+        expiresAt: expirationTime
+      };
+  
+      // 3. Generate QR code with the complete payload
       const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), {
         width: 300,
         margin: 2,
@@ -64,18 +76,21 @@ const Dashboard: React.FC = () => {
           light: "#ffffff",
         },
       });
-      setQrCodeUrl(qrDataUrl);
-      setShowQRCode(true);
-
+  
+      // 4. Upload image to storage
       const response = await fetch(qrDataUrl);
       const blob = await response.blob();
-      const storageRef = ref(storage, `qrCodes/${qrTitle}_${currentTime}.png`);
+      const storageRef = ref(storage, `qrCodes/${qrDocRef.id}.png`); // Use document ID as filename
       const uploadTask = await uploadBytes(storageRef, blob);
       const downloadUrl = await getDownloadURL(uploadTask.ref);
-
-      qrPayload.imageUrl = downloadUrl;
-      await addDoc(qrCollectionRef, qrPayload);
-
+  
+      // 5. Update the document with image URL
+      await updateDoc(qrDocRef, {
+        imageUrl: downloadUrl
+      });
+  
+      setQrCodeUrl(qrDataUrl);
+      setShowQRCode(true);
       toast.success("QR Code saved successfully!");
       setQrTitle("");
       setExpirationTime("");
