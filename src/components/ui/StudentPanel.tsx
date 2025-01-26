@@ -92,7 +92,7 @@ const StudentPanel: React.FC = () => {
       await addDoc(qrCollectionRef, student);
       setSuccess("Student added successfully!");
       setToastMessage("Student added to the database!");
-      setStudent({ email: "", qrData: "", createdAt: "" });
+      setStudent({  email: "", qrData: "", createdAt: "" });
     } catch (err) {
       console.error("Error saving student data:", err);
       setError("Failed to save student data.");
