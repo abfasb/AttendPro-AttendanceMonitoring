@@ -100,10 +100,9 @@ const Dashboard: React.FC = () => {
 
   const downloadQRCode = async (url: string) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
       const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
+      link.href = url; 
+      link.target = "_blank"; 
       link.download = "qr_code.png";
       link.click();
     } catch (err) {

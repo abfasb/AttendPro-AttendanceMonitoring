@@ -21,6 +21,7 @@ const StudentPanel: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isCameraVisible, setIsCameraVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>("");
 
   const qrCollectionRef = collection(db, "students");
   const videoRef = useRef<HTMLVideoElement | null>(null); // Video element reference
@@ -35,6 +36,7 @@ const StudentPanel: React.FC = () => {
           qrData: data,
           createdAt: new Date().toISOString(),
         });
+        setToastMessage("QR Code scanned successfully!");
       }
     }
   };
@@ -55,6 +57,8 @@ const StudentPanel: React.FC = () => {
         imgElement.onload = async () => {
           const canvas = document.createElement("canvas");
           const context = canvas.getContext("2d");
+          canvas.width = imgElement.width;
+          canvas.height = imgElement.height;
           context?.drawImage(imgElement, 0, 0);
           const imageData = context?.getImageData(0, 0, canvas.width, canvas.height);
           if (imageData) {
@@ -66,8 +70,10 @@ const StudentPanel: React.FC = () => {
                 qrData: qrCode.data,
                 createdAt: new Date().toISOString(),
               });
+              setToastMessage("QR Code detected from image!");
             } else {
               setError("No QR code detected in the image.");
+              setToastMessage("");
             }
           }
         };
@@ -76,9 +82,8 @@ const StudentPanel: React.FC = () => {
     },
   });
 
-  // Save student data to Firestore
   const saveStudentData = async () => {
-    if (!student.email || !student.qrData) {
+    if (!student.qrData) {
       setError("Please complete all fields.");
       return;
     }
@@ -86,10 +91,12 @@ const StudentPanel: React.FC = () => {
     try {
       await addDoc(qrCollectionRef, student);
       setSuccess("Student added successfully!");
+      setToastMessage("Student added to the database!");
       setStudent({ email: "", qrData: "", createdAt: "" });
     } catch (err) {
       console.error("Error saving student data:", err);
       setError("Failed to save student data.");
+      setToastMessage("");
     }
   };
 
@@ -132,12 +139,11 @@ const StudentPanel: React.FC = () => {
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Add Student via QR Code</h2>
 
-        {/* Error and Success Messages */}
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {success && <div className="text-green-500 mb-4">{success}</div>}
+        {toastMessage && <div className="bg-indigo-500 text-white px-4 py-2 rounded-md">{toastMessage}</div>}
 
         <div className="space-y-4">
-          {/* QR Scanner Modal Button */}
           <button
             onClick={() => setIsCameraVisible(!isCameraVisible)}
             className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500"
@@ -145,7 +151,6 @@ const StudentPanel: React.FC = () => {
             {isCameraVisible ? "Hide Camera" : "Show Camera"}
           </button>
 
-          {/* Camera Modal */}
           {isCameraVisible && (
             <div className="bg-gray-50 p-4 rounded-lg shadow-sm mt-4">
               <h3 className="font-semibold text-lg mb-2">Scan QR Code</h3>
@@ -154,7 +159,6 @@ const StudentPanel: React.FC = () => {
             </div>
           )}
 
-          {/* File Upload */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="font-semibold text-lg mb-2">Or Upload QR Code Image</h3>
             <div {...getRootProps()}>
@@ -165,23 +169,11 @@ const StudentPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Student Email Input */}
-          <div>
-            <label className="block text-gray-700 font-medium">Email</label>
-            <input
-              type="email"
-              value={student.email}
-              onChange={(e) => setStudent({ ...student, email: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter student's email"
-            />
-          </div>
-
           <button
             onClick={saveStudentData}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500 transition"
+            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500"
           >
-            Save Student
+            Save Student Data
           </button>
         </div>
       </div>
