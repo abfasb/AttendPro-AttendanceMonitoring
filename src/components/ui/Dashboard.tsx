@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import DataTable, { TableColumn } from "react-data-table-component";
-import QRCode from "qrcode"; 
+import QRCode from "qrcode";
 import { db, storage } from "../../config/config";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface QRCodeItem {
   id?: string;
@@ -41,7 +43,7 @@ const Dashboard: React.FC = () => {
 
   const generateQRCode = async () => {
     if (!qrTitle || !expirationTime) {
-      alert("Please provide a title and expiration time.");
+      toast.error("Please provide a title and expiration time.");
       return;
     }
 
@@ -54,19 +56,17 @@ const Dashboard: React.FC = () => {
     };
 
     try {
-      // Generate QR code data URL
       const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), {
         width: 300,
         margin: 2,
         color: {
-          dark: "#000000", // Black foreground
-          light: "#ffffff", // White background
+          dark: "#000000",
+          light: "#ffffff",
         },
       });
       setQrCodeUrl(qrDataUrl);
       setShowQRCode(true);
 
-      // Upload QR Code image to Firebase Storage
       const response = await fetch(qrDataUrl);
       const blob = await response.blob();
       const storageRef = ref(storage, `qrCodes/${qrTitle}_${currentTime}.png`);
@@ -76,11 +76,12 @@ const Dashboard: React.FC = () => {
       qrPayload.imageUrl = downloadUrl;
       await addDoc(qrCollectionRef, qrPayload);
 
-      alert("QR Code saved successfully!");
+      toast.success("QR Code saved successfully!");
       setQrTitle("");
       setExpirationTime("");
       fetchQRCodes();
     } catch (err) {
+      toast.error("Error generating QR Code.");
       console.error("Error generating QR Code:", err);
     }
   };
@@ -89,18 +90,26 @@ const Dashboard: React.FC = () => {
     if (!id) return;
     try {
       await deleteDoc(doc(db, "qrCodes", id));
-      alert("QR Code deleted successfully!");
+      toast.success("QR Code deleted successfully!");
       fetchQRCodes();
     } catch (err) {
+      toast.error("Error deleting QR Code.");
       console.error("Error deleting QR Code:", err);
     }
   };
 
-  const downloadQRCode = (url: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "qr_code.png";
-    link.click();
+  const downloadQRCode = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = "qr_code.png";
+      link.click();
+    } catch (err) {
+      toast.error("Error downloading QR Code.");
+      console.error("Error downloading QR Code:", err);
+    }
   };
 
   const columns: TableColumn<QRCodeItem>[] = [
@@ -130,6 +139,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
+      <ToastContainer />
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">QR Code Generator</h2>
         <div className="space-y-4">
