@@ -60,16 +60,20 @@ const Overview: React.FC = () => {
   
       const recordsPromises = snapshot.docs.map(async (attendanceDoc) => {
         const data = attendanceDoc.data();
-        console.log(data);
         
         let studentName = "Unknown Student";
         try {
           const userRef = doc(db, "users", data.studentId);
           const userDoc = await getDoc(userRef);
-          const userData = userDoc.data() as UserData;
-          studentName = data.studentName || studentName;
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as UserData;
+            studentName = userData.firstName || studentName; 
+          } else {
+            studentName = data.studentName || studentName;
+          }
         } catch (error) {
           console.error("Error fetching user data:", error);
+          studentName = data.studentName || studentName; 
         }
   
         return {
@@ -89,7 +93,7 @@ const Overview: React.FC = () => {
       setLoading(false);
     }
   };
-
+      
   const handleQRCodeClick = async (qrCode: QRCode) => {
     setSelectedQRCode(qrCode);
     await fetchAttendanceRecords(qrCode.id);
