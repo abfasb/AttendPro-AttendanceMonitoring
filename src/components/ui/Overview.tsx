@@ -60,22 +60,18 @@ const Overview: React.FC = () => {
   
       const recordsPromises = snapshot.docs.map(async (attendanceDoc) => {
         const data = attendanceDoc.data();
+        console.log(data);
         
         let studentName = "Unknown Student";
         try {
           const userRef = doc(db, "users", data.studentId);
           const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as UserData;
-            studentName = userData.firstName || studentName; 
-          } else {
-            studentName = data.studentName || studentName;
-          }
+          const userData = userDoc.data() as UserData;
+          studentName = data.studentName || studentName;
         } catch (error) {
           console.error("Error fetching user data:", error);
-          studentName = data.studentName || studentName; 
         }
-  
+
         return {
           id: attendanceDoc.id,
           studentId: data.studentId,
@@ -84,7 +80,7 @@ const Overview: React.FC = () => {
           createdAt: data.createdAt
         } as AttendanceRecord;
       });
-  
+
       const records = await Promise.all(recordsPromises);
       setAttendanceRecords(records);
     } catch (err) {
