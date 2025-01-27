@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { db, auth } from '../../config/config';
 import { collection, addDoc } from 'firebase/firestore';
 import bcrypt from 'bcryptjs';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 const Register: React.FC = () => {
@@ -12,21 +12,23 @@ const Register: React.FC = () => {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    userRole: 'student'
   });
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.email || 
+        !formData.password || !formData.confirmPassword || !formData.userRole) {
       alert('All fields are required');
       return;
     }
@@ -51,13 +53,14 @@ const Register: React.FC = () => {
         FirstName: formData.firstName,
         LastName: formData.lastName,
         email: formData.email,
-        password: hashedPassword
+        password: hashedPassword,
+        role: formData.userRole
       });
 
       setIsSuccessModalOpen(true);
 
       setTimeout(() => {
-        navigate('/login');
+        navigate(`/login`);
       }, 2000);
 
     } catch (e) {
@@ -67,148 +70,187 @@ const Register: React.FC = () => {
   };
 
   return (
-    <section className="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <h1 className="text-2xl font-semibold text-center text-gray-900 dark:text-white">Create an Account</h1>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="John"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
+    <section className="min-h-screen bg-gradient-to-br from-white-600 to-blue-500 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 space-y-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10 space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold text-gray-800">Join Our Community</h1>
+            <p className="text-gray-600">Create your account in just a few steps</p>
           </div>
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="Doe"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="username@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="terms"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <label htmlFor="terms" className="text-sm text-gray-500 dark:text-gray-300">
-              I accept the{' '}
-              <a href="#" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-                Terms and Conditions
-              </a>
-            </label>
-          </div>
-          <button
-            type="submit"
-            className="w-full py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Create Account
-          </button>
-          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
-            Already have an account?{' '}
-            <a href="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-              Login here
-            </a>
-          </p>
-        </form>
-      </div>
 
-      {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="relative p-6 max-w-md w-full bg-white rounded-lg shadow-lg dark:bg-gray-800">
-            <button
-              type="button"
-              onClick={() => setIsSuccessModalOpen(false)}
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            >
-              <span className="sr-only">Close</span>
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full dark:bg-green-900">
-                <svg
-                  className="w-8 h-8 text-green-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">First Name</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="John"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
                   />
+                  <svg className="w-5 h-5 absolute right-4 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  placeholder="Doe"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Email</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  name="email"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  placeholder="username@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <svg className="w-5 h-5 absolute right-4 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                Account created successfully!
-              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Password</label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    name="password"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <svg className="w-5 h-5 absolute right-4 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                  <svg className="w-5 h-5 absolute right-4 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Account Type</label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData({...formData, userRole: 'student'})}
+                  className={`p-4 rounded-xl border-2 transition-all ${formData.userRole === 'student' 
+                    ? 'border-purple-500 bg-purple-50' 
+                    : 'border-gray-200 hover:border-purple-300'}`}
+                >
+                  <span className={`font-medium ${formData.userRole === 'student' ? 'text-purple-600' : 'text-gray-600'}`}>
+                    Student
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({...formData, userRole: 'instructor'})}
+                  className={`p-4 rounded-xl border-2 transition-all ${formData.userRole === 'instructor' 
+                    ? 'border-purple-500 bg-purple-50' 
+                    : 'border-gray-200 hover:border-purple-300'}`}
+                >
+                  <span className={`font-medium ${formData.userRole === 'instructor' ? 'text-purple-600' : 'text-gray-600'}`}>
+                    Instructor
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="terms"
+                className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                required
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600">
+                I agree to the{' '}
+                <a href="#" className="font-medium text-purple-600 hover:underline">
+                  Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="#" className="font-medium text-purple-600 hover:underline">
+                  Privacy Policy
+                </a>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all"
+            >
+              Create Account
+            </button>
+
+            <p className="text-center text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-purple-600 hover:underline">
+                Sign in here
+              </Link>
+            </p>
+          </form>
+        </div>
+
+        {isSuccessModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-pop-in">
+              <div className="flex flex-col items-center space-y-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Account Created!</h3>
+                <p className="text-gray-600 text-center">
+                  Your account has been successfully created. Redirecting to login...
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 };
