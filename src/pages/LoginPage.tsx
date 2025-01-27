@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
       }));
 
       toast.success('Login successful with Google!', { position: "top-right", autoClose: 5000 });
-      navigate('/my-account/student', { state: { user: { uid: user.uid, displayName: user.displayName, email: user.email, photoURL: user.photoURL } } });
+      navigate('/my-account/student');
     } catch (error) {
       console.log('Something went wrong', error);
       toast.error('Google login failed. Please try again.', { position: "top-right", autoClose: 5000 });
@@ -91,7 +91,7 @@ const LoginPage: React.FC = () => {
           photoURL: 'https://humanrightsrilanka.org/wp-content/uploads/2019/04/iStock-476085198.jpg',
         }));
         toast.success('Login successful!', { position: "top-right", autoClose: 5000 });
-        navigate('/my-account/student', { state: { user: userData } });
+        navigate('/my-account/student');
         return true;
       } else {
         setLoginError('Incorrect password');

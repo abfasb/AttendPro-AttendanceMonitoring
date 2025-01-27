@@ -3,7 +3,10 @@ import { db } from "../../config/config";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useDropzone } from "react-dropzone";
 import jsQR from "jsqr";
-import { FiCamera, FiUpload, FiSave, FiXCircle, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { 
+  FiCamera, FiUpload, FiSave, FiXCircle, 
+  FiCheckCircle, FiInfo, FiLogOut 
+} from "react-icons/fi";
 
 interface Attendance {
   studentName: string;
@@ -23,16 +26,15 @@ const StudentPanel: React.FC = () => {
   const [isCameraVisible, setIsCameraVisible] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>("");
   const [filePreview, setFilePreview] = useState<string>("");
+  const [isCameraLoading, setIsCameraLoading] = useState<boolean>(false);
 
   const qrCollectionRef = collection(db, "attendances");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Get user data from localStorage
   const userData = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Auto-hide toast after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setToastMessage("");
@@ -40,22 +42,24 @@ const StudentPanel: React.FC = () => {
     return () => clearTimeout(timer);
   }, [toastMessage]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
   const handleScan = (data: string | null) => {
     if (data) {
       try {
-        // Validate QR data format
         const qrData = JSON.parse(data);
         if (!qrData.id) throw new Error("Invalid QR code format");
-        
-        if (data.length > 0) {
-          setAttendance({
-            studentName: `${userData.displayName}`,
-            qrData: data, 
-            createdAt: new Date().toISOString(),
-          });
-          setToastMessage("QR Code scanned successfully!");
-          setError("");
-        }
+
+        setAttendance({
+          studentName: `${userData.FirstName} ${userData.LastName}`,
+          qrData: data,
+          createdAt: new Date().toISOString(),
+        });
+        setToastMessage("QR Code scanned successfully!");
+        setError("");
       } catch (err) {
         setError("Invalid QR Code format - please scan a valid attendance code");
       }
@@ -97,7 +101,7 @@ const StudentPanel: React.FC = () => {
       setError("Please scan a valid QR code first");
       return;
     }
-  
+
     try {
       let qrCodeData;
       try {
@@ -105,55 +109,57 @@ const StudentPanel: React.FC = () => {
       } catch (error) {
         throw new Error("Invalid QR code format");
       }
-  
+
       const attendanceQuery = query(
         qrCollectionRef,
         where("studentId", "==", userData.uid),
-        where("qrCodeId", "==", qrCodeData.id) 
+        where("qrCodeId", "==", qrCodeData.id)
       );
-      
+
       const querySnapshot = await getDocs(attendanceQuery);
       if (!querySnapshot.empty) {
         setError("You've already submitted attendance for this session");
         return;
       }
-  
+
       await addDoc(qrCollectionRef, {
-        studentName: userData.displayName,
+        studentName: `${userData.FirstName} ${userData.LastName}`,
         studentId: userData.uid,
         qrCodeId: qrCodeData.id,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
-      
+
       setSuccess("Attendance recorded successfully!");
       setToastMessage("Attendance saved to database!");
       setAttendance({ studentName: "", qrData: "", createdAt: "" });
-  
     } catch (err) {
       console.error("Error saving attendance:", err);
       setError(err instanceof Error ? err.message : "Failed to save attendance data.");
     }
   };
 
-
   useEffect(() => {
     if (isCameraVisible && videoRef.current) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      setIsCameraLoading(true);
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" } })
         .then((stream) => {
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
+          setIsCameraLoading(false);
         })
         .catch((error) => {
           setError("Camera access denied. Please enable permissions.");
           console.error(error);
+          setIsCameraLoading(false);
         });
     }
 
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, [isCameraVisible]);
@@ -182,7 +188,6 @@ const StudentPanel: React.FC = () => {
     }
   }, [isCameraVisible]);
 
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
@@ -196,12 +201,45 @@ const StudentPanel: React.FC = () => {
         )}
 
         <div className="bg-white rounded-xl shadow-md p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-            Welcome, {userData.displayName || 'Student'}
-          </h1>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
+            <div className="mb-4 md:mb-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                Welcome, {userData.FirstName || "Student"}
+              </h1>
+              <p className="text-gray-600 mt-1">{userData.email}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              <FiLogOut className="mr-2" />
+              Logout
+            </button>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">Account Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <p className="text-gray-600">
+                  <span className="font-medium">First Name:</span> {userData.FirstName}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Last Name:</span> {userData.LastName}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600">
+                  <span className="font-medium">Student ID:</span> {userData.uid}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Email:</span> {userData.email}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-6">
-            {/* QR Scanner Section */}
             <div className="bg-gray-50 rounded-lg p-4">
               <button
                 onClick={() => setIsCameraVisible(!isCameraVisible)}
@@ -221,9 +259,14 @@ const StudentPanel: React.FC = () => {
               </button>
 
               {isCameraVisible && (
-                <div className="mt-4 aspect-video bg-black rounded-lg overflow-hidden">
-                  <video 
-                    ref={videoRef} 
+                <div className="mt-4 aspect-video bg-black rounded-lg overflow-hidden relative">
+                  {isCameraLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                  <video
+                    ref={videoRef}
                     className="w-full h-full object-cover"
                     autoPlay
                     playsInline
@@ -232,7 +275,6 @@ const StudentPanel: React.FC = () => {
               )}
             </div>
 
-            {/* QR Upload Section */}
             <div className="bg-gray-50 rounded-lg p-4">
               <div {...getRootProps()} className="cursor-pointer">
                 <input {...getInputProps()} />
@@ -245,7 +287,6 @@ const StudentPanel: React.FC = () => {
               </div>
             </div>
 
-            {/* Attendance Preview */}
             {attendance.qrData && (
               <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                 <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
@@ -254,7 +295,7 @@ const StudentPanel: React.FC = () => {
                 </h3>
                 <div className="space-y-2">
                   <p className="text-gray-700">
-                    <span className="font-medium">Student Name:</span> {userData.displayName}
+                    <span className="font-medium">Student Name:</span> {`${userData.FirstName} ${userData.LastName}`}
                   </p>
                   <p className="text-gray-700">
                     <span className="font-medium">Scan Time:</span>{" "}
@@ -264,7 +305,6 @@ const StudentPanel: React.FC = () => {
               </div>
             )}
 
-            {/* Submission Section */}
             {attendance.qrData && (
               <div className="flex flex-col md:flex-row gap-4">
                 <button
@@ -277,24 +317,22 @@ const StudentPanel: React.FC = () => {
               </div>
             )}
 
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center">
+                <FiXCircle className="mr-2 flex-shrink-0" />
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center">
-              <FiXCircle className="mr-2 flex-shrink-0" />
-              {error}
-            </div>
-          )}
-
-          {/* Success Messages */}
-          {success && (
-            <div className="bg-green-50 text-green-700 p-4 rounded-lg border border-green-200 flex items-center">
-              <FiCheckCircle className="mr-2 flex-shrink-0" />
-              {success}
-            </div>
-          )}
+            {success && (
+              <div className="bg-green-50 text-green-700 p-4 rounded-lg border border-green-200 flex items-center">
+                <FiCheckCircle className="mr-2 flex-shrink-0" />
+                {success}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };
