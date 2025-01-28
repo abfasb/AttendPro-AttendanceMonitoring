@@ -5,8 +5,9 @@ import { useDropzone } from "react-dropzone";
 import jsQR from "jsqr";
 import { 
   FiCamera, FiUpload, FiSave, FiXCircle, 
-  FiCheckCircle, FiInfo, FiLogOut 
+  FiCheckCircle, FiInfo, FiLogOut , FiMail, FiUser, FiDribbble
 } from "react-icons/fi";
+import { motion, AnimatePresence} from "framer-motion";
 
 interface Attendance {
   studentName: string;
@@ -189,149 +190,183 @@ const StudentPanel: React.FC = () => {
   }, [isCameraVisible]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        {toastMessage && (
-          <div className="fixed top-4 right-4 z-50 animate-slide-in">
-            <div className="bg-indigo-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
-              <FiInfo className="mr-2" />
-              {toastMessage}
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-md p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
-            <div className="mb-4 md:mb-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                Welcome, {userData.FirstName || "Student"}
-              </h1>
-              <p className="text-gray-600 mt-1">{userData.email}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-4 right-4 z-50"
             >
-              <FiLogOut className="mr-2" />
-              Logout
-            </button>
-          </div>
+              <div className="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-xl flex items-center space-x-2">
+                <FiInfo className="flex-shrink-0" />
+                <span>{toastMessage}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-3">Account Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+        >
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 md:p-8">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600">
-                  <span className="font-medium">First Name:</span> {userData.FirstName}
-                </p>
-                <p className="text-gray-600">
-                  <span className="font-medium">Last Name:</span> {userData.LastName}
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  Welcome, {userData.FirstName || "Student"}
+                </h1>
+                <p className="text-indigo-100 mt-1 flex items-center">
+                  <FiMail className="mr-2" />
+                  {userData.email}
                 </p>
               </div>
-              <div>
-                <p className="text-gray-600">
-                  <span className="font-medium">Student ID:</span> {userData.uid}
-                </p>
-                <p className="text-gray-600">
-                  <span className="font-medium">Email:</span> {userData.email}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-4">
               <button
-                onClick={() => setIsCameraVisible(!isCameraVisible)}
-                className="w-full md:w-auto bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-500 transition-colors flex items-center justify-center"
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-all"
               >
-                {isCameraVisible ? (
-                  <>
-                    <FiXCircle className="mr-2" />
-                    Stop Scanner
-                  </>
-                ) : (
-                  <>
-                    <FiCamera className="mr-2" />
-                    Start QR Scanner
-                  </>
-                )}
+                <FiLogOut className="flex-shrink-0" />
+                <span className="hidden md:inline">Logout</span>
               </button>
-
-              {isCameraVisible && (
-                <div className="mt-4 aspect-video bg-black rounded-lg overflow-hidden relative">
-                  {isCameraLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-                    </div>
-                  )}
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-cover"
-                    autoPlay
-                    playsInline
-                  />
-                </div>
-              )}
             </div>
-
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div {...getRootProps()} className="cursor-pointer">
-                <input {...getInputProps()} />
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-indigo-400 transition-colors">
-                  <FiUpload className="text-4xl text-gray-400 mb-4" />
-                  <p className="text-gray-600 text-center mb-2">
-                    Scan or upload instructor's QR code
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {attendance.qrData && (
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
-                  <FiCheckCircle className="mr-2" />
-                  Attendance Ready to Submit
-                </h3>
-                <div className="space-y-2">
-                  <p className="text-gray-700">
-                    <span className="font-medium">Student Name:</span> {`${userData.FirstName} ${userData.LastName}`}
-                  </p>
-                  <p className="text-gray-700">
-                    <span className="font-medium">Scan Time:</span>{" "}
-                    {new Date(attendance.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {attendance.qrData && (
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  onClick={saveAttendance}
-                  className="w-full bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-500 transition-colors flex items-center justify-center"
-                >
-                  <FiSave className="mr-2" />
-                  Submit Attendance
-                </button>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-200 flex items-center">
-                <FiXCircle className="mr-2 flex-shrink-0" />
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-50 text-green-700 p-4 rounded-lg border border-green-200 flex items-center">
-                <FiCheckCircle className="mr-2 flex-shrink-0" />
-                {success}
-              </div>
-            )}
           </div>
-        </div>
+
+          {/* Main Content */}
+          <div className="p-6 md:p-8 space-y-8">
+            {/* Student Profile Card */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <FiUser className="mr-2 text-indigo-600" />
+                Student Profile
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center text-gray-600">
+                    <span className="font-medium w-24">First Name:</span>
+                    <span>{userData.FirstName}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <span className="font-medium w-24">Last Name:</span>
+                    <span>{userData.LastName}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center text-gray-600">
+                    <FiDribbble className="mr-2 text-indigo-600" />
+                    <span className="font-medium">ID:</span>
+                    <span className="ml-2 font-mono">{userData.uid}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 border border-gray-200">
+                <div className="flex flex-col md:flex-row gap-4 items-start">
+                  <button
+                    onClick={() => setIsCameraVisible(!isCameraVisible)}
+                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl transition-all flex items-center justify-center space-x-2"
+                  >
+                    {isCameraVisible ? (
+                      <>
+                        <FiXCircle className="flex-shrink-0" />
+                        <span>Stop Scanner</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiCamera className="flex-shrink-0" />
+                        <span>Start QR Scanner</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="w-full md:flex-1">
+                    <div {...getRootProps()} className="cursor-pointer">
+                      <input {...getInputProps()} />
+                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-indigo-400 bg-white transition-all">
+                        <FiUpload className="text-3xl text-gray-400 mb-3" />
+                        <p className="text-gray-600 text-center text-sm">
+                          Drag & drop QR image here<br />
+                          or click to upload
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {isCameraVisible && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-6 aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg"
+                  >
+                    {isCameraLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
+                      </div>
+                    )}
+                    <video
+                      ref={videoRef}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      playsInline
+                    />
+                    <div className="absolute inset-0 border-4 border-indigo-400/30 rounded-xl pointer-events-none" />
+                  </motion.div>
+                )}
+              </div>
+
+              <AnimatePresence>
+                {attendance.qrData && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-green-50 rounded-xl p-6 border border-green-200"
+                  >
+                    <div className="flex items-center mb-3 space-x-2">
+                      <FiCheckCircle className="text-green-600 flex-shrink-0" />
+                      <h3 className="text-lg font-semibold text-green-800">
+                        Attendance Ready to Submit
+                      </h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-700">
+                        <span className="font-medium">Scanned at:</span>{' '}
+                        {new Date(attendance.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={saveAttendance}
+                      className="mt-4 w-full py-3 bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <FiSave className="flex-shrink-0" />
+                      <span>Confirm Submission</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 flex items-start space-x-2"
+                  >
+                    <FiXCircle className="flex-shrink-0 mt-1" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
