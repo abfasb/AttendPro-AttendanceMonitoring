@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { app, db } from '../config/config';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 import bcrypt from 'bcryptjs';
 import Login from '../components/auth/Login';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
+// Initialize auth and provider
 const provider = new GoogleAuthProvider();
 const auth = getAuth(app);
 
@@ -14,79 +15,128 @@ const LoginPage: React.FC = () => {
   const [loginError, setLoginError] = useState<string>('');
   const navigate = useNavigate();
 
+  // Add auth state listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        console.log('Auth state changed:', user);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      console.log('Google user:', user);
 
       const userRef = doc(db, 'users', user.uid);
-      await setDoc(
-        userRef,
-        {
-          uid: user.uid,
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-        },
-        { merge: true }
-      );
+      
+      // Merge data including role field
+      await setDoc(userRef, {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email.toLowerCase(), // Ensure lowercase
+        photoURL: user.photoURL,
+        role: 'student' // Default role
+      }, { merge: true });
 
-      localStorage.setItem(
-        'user',
-        JSON.stringify({
-          uid: user.uid,
-          displayName: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-        })
-      );
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        console.error('User document missing after creation');
+        toast.error('Account setup incomplete', { position: 'top-right', autoClose: 5000 });
+        return;
+      }
 
-      toast.success('Login successful with Google!', { position: 'top-right', autoClose: 5000 });
-      navigate('/my-account/student');
+      const userData = userDoc.data();
+      console.log('Firestore user data:', userData);
+
+      const userState = {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: userData?.role || 'student'
+      };
+
+      localStorage.setItem('user', JSON.stringify(userState));
+      console.log('Local storage set:', userState);
+
+      const redirectPath = userData?.role === 'instructor' 
+        ? '/my-account/instructor' 
+        : '/my-account/student';
+      
+      console.log('Navigating to:', redirectPath);
+      navigate(redirectPath);
+      window.location.reload(); // Force state refresh
+
     } catch (error) {
-      console.error('Something went wrong', error);
-      toast.error('Google login failed. Please try again.', { position: 'top-right', autoClose: 5000 });
+      console.error('Google login failed:', error);
+      toast.error('Google login failed. Check console for details', { position: 'top-right', autoClose: 5000 });
     }
   };
 
   const signInWithUsernameAndPassword = async (email: string, password: string): Promise<boolean> => {
     try {
+      const normalizedEmail = email.toLowerCase();
+      console.log('Login attempt with email:', normalizedEmail);
+
       const usersCollection = collection(db, 'users');
-      const q = query(usersCollection, where('email', '==', email));
+      const q = query(usersCollection, where('email', '==', normalizedEmail));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        setLoginError('User not found');
-        toast.error('User not found.', { position: 'top-right', autoClose: 5000 });
+        console.warn('No user found for email:', normalizedEmail);
+        toast.error('Account not found', { position: 'top-right', autoClose: 5000 });
         return false;
       }
 
-      const userData = querySnapshot.docs[0].data();
-      const hashedPassword = userData.password;
-      const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      console.log('User document data:', userData);
 
-      if (isPasswordCorrect) {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            uid: querySnapshot.docs[0].id,
-            email: userData.email,
-            displayName: `${userData.FirstName} ${userData.LastName}`,
-            photoURL: 'https://humanrightsrilanka.org/wp-content/uploads/2019/04/iStock-476085198.jpg',
-          })
-        );
-        toast.success('Login successful!', { position: 'top-right', autoClose: 5000 });
-        navigate('/my-account/student');
-        return true;
-      } else {
-        setLoginError('Incorrect password');
-        toast.error('Incorrect password. Please try again.', { position: 'top-right', autoClose: 5000 });
+      if (!userData.password) {
+        console.error('User document missing password field');
+        toast.error('Account configuration error', { position: 'top-right', autoClose: 5000 });
         return false;
       }
+
+      const isPasswordCorrect = await bcrypt.compare(password, userData.password);
+      console.log('Password match:', isPasswordCorrect);
+
+      if (!isPasswordCorrect) {
+        toast.error('Incorrect password', { position: 'top-right', autoClose: 5000 });
+        return false;
+      }
+
+      const userState = {
+        uid: userDoc.id,
+        email: userData.email,
+        firstName: userData.firstName || userData.FirstName,
+        lastName: userData.lastName || userData.LastName,
+        displayName: `${userData.FirstName} ${userData.LastName}`,
+        photoURL: userData.photoURL || 'https://example.com/default-avatar.jpg',
+        role: userData.role || 'student'
+      };
+
+      localStorage.setItem('user', JSON.stringify(userState));
+      console.log('Local storage set:', userState);
+
+      const redirectPath = userData.role === 'instructor'
+        ? '/my-account/instructor'
+        : '/my-account/student';
+      
+      console.log('Navigating to:', redirectPath);
+      navigate(redirectPath);
+      window.location.reload(); // Force state refresh
+      return true;
+
     } catch (error) {
-      console.error('Error logging in: ', error);
-      setLoginError('Something went wrong, please try again.');
-      toast.error('Login failed. Please try again later.', { position: 'top-right', autoClose: 5000 });
+      console.error('Login error:', error);
+      toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+        { position: 'top-right', autoClose: 5000 });
       return false;
     }
   };

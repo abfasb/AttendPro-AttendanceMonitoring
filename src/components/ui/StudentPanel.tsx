@@ -215,7 +215,6 @@ const StudentPanel: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
-          {/* Header Section */}
           <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 md:p-8">
             <div className="flex items-center justify-between">
               <div>
@@ -247,11 +246,11 @@ const StudentPanel: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center text-gray-600">
                     <span className="font-medium w-24">First Name:</span>
-                    <span>{userData.FirstName}</span>
+                    <span>{userData.firstName}</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <span className="font-medium w-24">Last Name:</span>
-                    <span>{userData.LastName}</span>
+                    <span>{userData.lastName}</span>
                   </div>
                 </div>
                 <div className="space-y-2">

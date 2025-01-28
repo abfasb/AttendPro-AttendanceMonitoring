@@ -6,6 +6,7 @@ import InstructorPage from './pages/Instructor/InstructorPage'
 import StudentPage from './pages/Student/StudentPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import LandingPage from './components/ui/LandingPage'
+import UnauthorizedPage from './pages/UnAuthorizedPage'
 
 function App() {
 
@@ -20,11 +21,15 @@ function App() {
 
         <Route path='/register' element={<RegistrationPage />}/>
         <Route path='/login' element={<LoginPage />}/>
+        <Route path='/unauthorized' element={<UnauthorizedPage />}/>
 
 
-        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-              <Route path='/my-account/instructor/' element={<InstructorPage />}/>
-              <Route path='/my-account/student' element={<StudentPage />}/>
+        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="instructor"/>}>
+              <Route path='/my-account/instructor/*' element={<InstructorPage />}/>
+        </Route>
+
+        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="student"/>}>
+          <Route path='/my-account/student/*' element={<StudentPage />}/>
         </Route>
         
       </Routes>
