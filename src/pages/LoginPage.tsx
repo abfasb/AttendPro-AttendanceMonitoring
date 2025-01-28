@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect
+import React, { useState, useEffect } from 'react';
 import { app, db } from '../config/config';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { collection, query, where, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
@@ -7,7 +7,6 @@ import Login from '../components/auth/Login';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-// Initialize auth and provider
 const provider = new GoogleAuthProvider();
 const auth = getAuth(app);
 
@@ -15,7 +14,6 @@ const LoginPage: React.FC = () => {
   const [loginError, setLoginError] = useState<string>('');
   const navigate = useNavigate();
 
-  // Add auth state listener
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
@@ -33,13 +31,12 @@ const LoginPage: React.FC = () => {
 
       const userRef = doc(db, 'users', user.uid);
       
-      // Merge data including role field
       await setDoc(userRef, {
         uid: user.uid,
         displayName: user.displayName,
-        email: user.email.toLowerCase(), // Ensure lowercase
+        email: user.email,
         photoURL: user.photoURL,
-        role: 'student' // Default role
+        role: 'student'
       }, { merge: true });
 
       const userDoc = await getDoc(userRef);
@@ -70,7 +67,7 @@ const LoginPage: React.FC = () => {
       
       console.log('Navigating to:', redirectPath);
       navigate(redirectPath);
-      window.location.reload(); // Force state refresh
+      window.location.reload(); 
 
     } catch (error) {
       console.error('Google login failed:', error);
@@ -130,7 +127,7 @@ const LoginPage: React.FC = () => {
       
       console.log('Navigating to:', redirectPath);
       navigate(redirectPath);
-      window.location.reload(); // Force state refresh
+      window.location.reload();
       return true;
 
     } catch (error) {
