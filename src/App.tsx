@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import InstructorPage from './pages/Instructor/InstructorPage'
 import StudentPage from './pages/Student/StudentPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import LandingPage from './components/ui/LandingPage'
 
 function App() {
 
@@ -13,6 +14,9 @@ function App() {
   return (
     <Router>
       <Routes>
+
+    {/*Landing Page */}
+      <Route path='/' element={<LandingPage />}/>
 
         <Route path='/register' element={<RegistrationPage />}/>
         <Route path='/login' element={<LoginPage />}/>

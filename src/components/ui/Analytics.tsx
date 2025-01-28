@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../config/config";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, ResponsiveContainer } from "recharts";
 import { FiTrendingUp, FiUsers, FiCalendar, FiCode } from "react-icons/fi";
 
 interface QRCode {
@@ -132,96 +132,191 @@ const Analytics: React.FC = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6">Attendance Analytics</h1>
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Attendance Analytics Dashboard</h1>
 
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading analytics...</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Attendance Overview</h2>
-            <div className="space-y-4">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="w-24 h-24 bg-blue-100 rounded-full mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Stat Cards */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <div className="flex items-center gap-4">
-                <FiCode className="text-2xl text-blue-500" />
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <FiCode className="text-2xl text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-gray-600">Total QR Codes</p>
-                  <p className="text-2xl font-bold">{getTotalQRCodes()}</p>
+                  <p className="text-sm text-gray-500">Total QR Codes</p>
+                  <p className="text-2xl font-bold text-gray-900">{getTotalQRCodes()}</p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <div className="flex items-center gap-4">
-                <FiUsers className="text-2xl text-green-500" />
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <FiUsers className="text-2xl text-green-600" />
+                </div>
                 <div>
-                  <p className="text-gray-600">Total Attendance Records</p>
-                  <p className="text-2xl font-bold">{getTotalAttendanceRecords()}</p>
+                  <p className="text-sm text-gray-500">Total Attendance</p>
+                  <p className="text-2xl font-bold text-gray-900">{getTotalAttendanceRecords()}</p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <div className="flex items-center gap-4">
-                <FiTrendingUp className="text-2xl text-purple-500" />
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <FiTrendingUp className="text-2xl text-purple-600" />
+                </div>
                 <div>
-                  <p className="text-gray-600">Average Attendance per QR Code</p>
-                  <p className="text-2xl font-bold">{getAverageAttendancePerQRCode()}</p>
+                  <p className="text-sm text-gray-500">Avg/QR Code</p>
+                  <p className="text-2xl font-bold text-gray-900">{getAverageAttendancePerQRCode()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 rounded-lg">
+                  <FiCalendar className="text-2xl text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Active Student</p>
+                  <p className="text-xl font-bold text-gray-900 truncate">{getMostActiveStudent()}</p>
                 </div>
               </div>
             </div>
           </div>
+        )}
 
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">QR Code Insights</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-gray-600">Most Used QR Code</p>
-                <p className="text-xl font-bold">{getMostUsedQRCode()}</p>
+        {!loading && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Attendance Trends */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Attendance Trends</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={getAttendanceTrends()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: '#6b7280' }}
+                      stroke="#d1d5db"
+                    />
+                    <YAxis 
+                      tick={{ fill: '#6b7280' }}
+                      stroke="#d1d5db"
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        background: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="attendance" 
+                      stroke="#6366f1" 
+                      strokeWidth={2}
+                      dot={{ fill: '#6366f1', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <div>
-                <p className="text-gray-600">QR Code Status Distribution</p>
-                <PieChart width={300} height={200}>
-                  <Pie
-                    data={getQRCodeStatusDistribution()}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label
-                  >
-                    {getQRCodeStatusDistribution().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
+            </div>
+
+            {/* QR Code Distribution */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">QR Code Status Distribution</h2>
+              <div className="h-80 flex flex-col items-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={getQRCodeStatusDistribution()}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {getQRCodeStatusDistribution().map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]}
+                          stroke="#fff"
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        background: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Legend 
+                      layout="vertical"
+                      align="right"
+                      verticalAlign="middle"
+                      formatter={(value, entry) => (
+                        <span className="text-gray-600">{value}</span>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Most Used QR Code */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Most Used QR Code</h2>
+              <div className="flex items-center justify-center p-4 bg-indigo-50 rounded-lg">
+                <span className="text-2xl font-bold text-indigo-600">
+                  {getMostUsedQRCode()}
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                {qrCodes.slice(0,4).map(qr => (
+                  <div key={qr.id} className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-gray-900 truncate">{qr.title}</p>
+                    <p className="text-sm text-gray-500">{qr.status}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Attendance</h2>
+              <div className="space-y-4">
+                {attendanceRecords.slice(0,5).map(record => (
+                  <div key={record.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{record.studentName}</p>
+                      <p className="text-sm text-gray-500">{new Date(record.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <span className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                      Present
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Student Insights</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-gray-600">Most Active Student</p>
-                <p className="text-xl font-bold">{getMostActiveStudent()}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Attendance Trends */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Attendance Trends</h2>
-            <LineChart width={800} height={300} data={getAttendanceTrends()}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="attendance" stroke="#8884d8" />
-            </LineChart>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

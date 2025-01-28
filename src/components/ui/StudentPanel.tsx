@@ -36,6 +36,8 @@ const StudentPanel: React.FC = () => {
 
   const userData = JSON.parse(localStorage.getItem('user') || '{}');
 
+  console.log(userData);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setToastMessage("");
@@ -124,7 +126,7 @@ const StudentPanel: React.FC = () => {
       }
 
       await addDoc(qrCollectionRef, {
-        studentName: `${userData.FirstName} ${userData.LastName}`,
+        studentName: `${userData.displayName}`,
         studentId: userData.uid,
         qrCodeId: qrCodeData.id,
         createdAt: new Date().toISOString(),
@@ -218,7 +220,7 @@ const StudentPanel: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-white">
-                  Welcome, {userData.FirstName || "Student"}
+                  Welcome, {userData.displayName || "Student"}
                 </h1>
                 <p className="text-indigo-100 mt-1 flex items-center">
                   <FiMail className="mr-2" />
@@ -235,9 +237,7 @@ const StudentPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="p-6 md:p-8 space-y-8">
-            {/* Student Profile Card */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FiUser className="mr-2 text-indigo-600" />
