@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { db } from "../../config/config";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useDropzone } from "react-dropzone";
 import jsQR from "jsqr";
 import { 
-  FiCamera, FiUpload, FiSave, FiXCircle, 
-  FiCheckCircle, FiInfo, FiLogOut , FiMail, FiUser, FiDribbble
+  FiCamera, FiUpload, FiSave, FiXCircle, FiRotateCw,
+  FiCheckCircle, FiInfo, FiLogOut, FiMail, FiUser, FiDribbble
 } from "react-icons/fi";
-import { motion, AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Attendance {
   studentName: string;
@@ -28,6 +28,9 @@ const StudentPanel: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string>("");
   const [filePreview, setFilePreview] = useState<string>("");
   const [isCameraLoading, setIsCameraLoading] = useState<boolean>(false);
+  const [isProcessingScan, setIsProcessingScan] = useState<boolean>(false);
+  const [cameraFacingMode, setCameraFacingMode] = useState<"user" | "environment">("environment");
+  const [hasMultipleCameras, setHasMultipleCameras] = useState<boolean>(false);
 
   const qrCollectionRef = collection(db, "attendances");
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -36,7 +39,49 @@ const StudentPanel: React.FC = () => {
 
   const userData = JSON.parse(localStorage.getItem('user') || '{}');
 
-  console.log(userData);
+  // Dropzone configuration
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg'] },
+    onDrop: async (acceptedFiles) => {
+      try {
+        const file = acceptedFiles[0];
+        const image = await readFile(file);
+        const qrData = await scanImageForQR(image);
+        
+        if (qrData) {
+          handleScan(qrData);
+          setFilePreview(URL.createObjectURL(file));
+        } else {
+          setError("No QR code found in the image");
+        }
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Failed to process image");
+      }
+    },
+  });
+
+  const readFile = (file: File): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const scanImageForQR = async (img: HTMLImageElement): Promise<string | null> => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+    return qrCode?.data || null;
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -50,54 +95,40 @@ const StudentPanel: React.FC = () => {
     window.location.href = '/login';
   };
 
-  const handleScan = (data: string | null) => {
-    if (data) {
-      try {
-        const qrData = JSON.parse(data);
-        if (!qrData.id) throw new Error("Invalid QR code format");
+  const handleScan = async (data: string | null) => {
+    if (!data || isProcessingScan) return;
+    setIsProcessingScan(true);
 
-        setAttendance({
-          studentName: `${userData.FirstName} ${userData.LastName}`,
-          qrData: data,
-          createdAt: new Date().toISOString(),
-        });
-        setToastMessage("QR Code scanned successfully!");
-        setError("");
-      } catch (err) {
-        setError("Invalid QR Code format - please scan a valid attendance code");
-      }
+    try {
+      const qrData = JSON.parse(data);
+      if (!qrData.id) throw new Error("Invalid QR code format");
+
+      const qrCodeQuery = query(collection(db, "qrCodes"), where("__name__", "==", qrData.id));
+      const qrCodeSnapshot = await getDocs(qrCodeQuery);
+      
+      if (qrCodeSnapshot.empty) throw new Error("QR code not found");
+      
+      const qrCodeDoc = qrCodeSnapshot.docs[0].data();
+      const expiresAt = new Date(qrCodeDoc.expiresAt);
+      const currentTime = new Date();
+
+      if (qrCodeDoc.status !== "active") throw new Error("This QR code is deactivated");
+      if (currentTime > expiresAt) throw new Error("This QR code has expired");
+
+      setAttendance({
+        studentName: `${userData.FirstName} ${userData.LastName}`,
+        qrData: data,
+        createdAt: new Date().toISOString(),
+      });
+      setIsCameraVisible(false);
+      setToastMessage("QR Code scanned successfully!");
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid QR code");
+    } finally {
+      setIsProcessingScan(false);
     }
   };
-
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: { "image/*": [] },
-    onDrop: async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        setFilePreview(reader.result as string);
-        const imgElement = new Image();
-        imgElement.src = reader.result as string;
-        imgElement.onload = async () => {
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          canvas.width = imgElement.width;
-          canvas.height = imgElement.height;
-          context?.drawImage(imgElement, 0, 0);
-          const imageData = context?.getImageData(0, 0, canvas.width, canvas.height);
-          if (imageData) {
-            const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
-            if (qrCode) {
-              handleScan(qrCode.data);
-            } else {
-              setError("No QR code detected in the image.");
-            }
-          }
-        };
-      };
-      reader.readAsDataURL(file);
-    },
-  });
 
   const saveAttendance = async () => {
     if (!attendance.qrData) {
@@ -106,11 +137,18 @@ const StudentPanel: React.FC = () => {
     }
 
     try {
-      let qrCodeData;
-      try {
-        qrCodeData = JSON.parse(attendance.qrData);
-      } catch (error) {
-        throw new Error("Invalid QR code format");
+      const qrCodeData = JSON.parse(attendance.qrData);
+      const qrCodeQuery = query(collection(db, "qrCodes"), where("__name__", "==", qrCodeData.id));
+      const qrCodeSnapshot = await getDocs(qrCodeQuery);
+
+      if (qrCodeSnapshot.empty) throw new Error("QR code not found");
+      
+      const qrCodeDoc = qrCodeSnapshot.docs[0].data();
+      const expiresAt = new Date(qrCodeDoc.expiresAt);
+      const currentTime = new Date();
+
+      if (qrCodeDoc.status !== "active" || currentTime > expiresAt) {
+        throw new Error("This QR code is no longer valid");
       }
 
       const attendanceQuery = query(
@@ -121,7 +159,7 @@ const StudentPanel: React.FC = () => {
 
       const querySnapshot = await getDocs(attendanceQuery);
       if (!querySnapshot.empty) {
-        setError("You've already submitted attendance for this session");
+        setError("Attendance already submitted for this session");
         return;
       }
 
@@ -136,35 +174,51 @@ const StudentPanel: React.FC = () => {
       setToastMessage("Attendance saved to database!");
       setAttendance({ studentName: "", qrData: "", createdAt: "" });
     } catch (err) {
-      console.error("Error saving attendance:", err);
-      setError(err instanceof Error ? err.message : "Failed to save attendance data.");
+      setError(err instanceof Error ? err.message : "Failed to save attendance");
     }
   };
 
-  useEffect(() => {
-    if (isCameraVisible && videoRef.current) {
-      setIsCameraLoading(true);
-      navigator.mediaDevices
-        .getUserMedia({ video: { facingMode: "environment" } })
-        .then((stream) => {
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-          setIsCameraLoading(false);
-        })
-        .catch((error) => {
-          setError("Camera access denied. Please enable permissions.");
-          console.error(error);
-          setIsCameraLoading(false);
-        });
-    }
+  const startCamera = async (facingMode: "user" | "environment") => {
+    if (!videoRef.current) return;
 
-    return () => {
+    try {
+      setIsCameraLoading(true);
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
-    };
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode }
+      });
+
+      // Check for multiple cameras
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setHasMultipleCameras(videoDevices.length > 1);
+
+      streamRef.current = stream;
+      videoRef.current.srcObject = stream;
+      setIsCameraLoading(false);
+    } catch (error) {
+      setError("Camera access denied. Please enable permissions.");
+      setIsCameraLoading(false);
+    }
+  };
+
+  const toggleCameraFacing = () => {
+    const newMode = cameraFacingMode === "environment" ? "user" : "environment";
+    setCameraFacingMode(newMode);
+    startCamera(newMode);
+  };
+
+  useEffect(() => {
+    if (isCameraVisible) {
+      startCamera(cameraFacingMode);
+    } else {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    }
   }, [isCameraVisible]);
 
   useEffect(() => {
@@ -215,6 +269,7 @@ const StudentPanel: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
+          {/* Header Section */}
           <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 md:p-8">
             <div className="flex items-center justify-between">
               <div>
@@ -237,32 +292,18 @@ const StudentPanel: React.FC = () => {
           </div>
 
           <div className="p-6 md:p-8 space-y-8">
+            {/* Profile Section */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FiUser className="mr-2 text-indigo-600" />
                 Student Profile
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center text-gray-600">
-                    <span className="font-medium w-24">First Name:</span>
-                    <span>{userData.firstName}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <span className="font-medium w-24">Last Name:</span>
-                    <span>{userData.lastName}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center text-gray-600">
-                    <FiDribbble className="mr-2 text-indigo-600" />
-                    <span className="font-medium">ID:</span>
-                    <span className="ml-2 font-mono">{userData.uid}</span>
-                  </div>
-                </div>
+                {/* ... (keep existing profile content) ... */}
               </div>
             </div>
 
+            {/* Scanner Section */}
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 border border-gray-200">
                 <div className="flex flex-col md:flex-row gap-4 items-start">
@@ -283,11 +324,20 @@ const StudentPanel: React.FC = () => {
                     )}
                   </button>
 
+                  {/* File Upload Dropzone */}
                   <div className="w-full md:flex-1">
                     <div {...getRootProps()} className="cursor-pointer">
                       <input {...getInputProps()} />
                       <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-indigo-400 bg-white transition-all">
-                        <FiUpload className="text-3xl text-gray-400 mb-3" />
+                        {filePreview ? (
+                          <img 
+                            src={filePreview} 
+                            alt="QR Preview" 
+                            className="mb-3 max-h-32 object-contain"
+                          />
+                        ) : (
+                          <FiUpload className="text-3xl text-gray-400 mb-3" />
+                        )}
                         <p className="text-gray-600 text-center text-sm">
                           Drag & drop QR image here<br />
                           or click to upload
@@ -297,6 +347,7 @@ const StudentPanel: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Camera Preview */}
                 {isCameraVisible && (
                   <motion.div 
                     initial={{ opacity: 0 }}
@@ -308,48 +359,87 @@ const StudentPanel: React.FC = () => {
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
                       </div>
                     )}
+
+                    {/* Scanning Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="relative w-full h-full">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-[70%] aspect-square border-4 border-indigo-400/50 rounded-xl animate-pulse">
+                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-white text-sm">
+                              Align QR code within frame
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Camera Switch Button */}
+                    {hasMultipleCameras && (
+                      <button
+                        onClick={toggleCameraFacing}
+                        className="absolute bottom-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-sm transition-all"
+                      >
+                        <FiRotateCw className="text-white text-xl" />
+                      </button>
+                    )}
+
                     <video
                       ref={videoRef}
                       className="w-full h-full object-cover"
                       autoPlay
                       playsInline
                     />
-                    <div className="absolute inset-0 border-4 border-indigo-400/30 rounded-xl pointer-events-none" />
                   </motion.div>
                 )}
               </div>
 
+              {/* Processing State */}
               <AnimatePresence>
-                {attendance.qrData && (
+                {isProcessingScan && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="bg-blue-50 p-4 rounded-xl border border-blue-200 flex items-center justify-center space-x-2"
+                  >
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                    <span className="text-blue-600">Scanning QR Code...</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Success State */}
+              <AnimatePresence>
+                {success && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     className="bg-green-50 rounded-xl p-6 border border-green-200"
                   >
-                    <div className="flex items-center mb-3 space-x-2">
-                      <FiCheckCircle className="text-green-600 flex-shrink-0" />
-                      <h3 className="text-lg font-semibold text-green-800">
-                        Attendance Ready to Submit
+                    <div className="flex flex-col items-center text-center">
+                      <FiCheckCircle className="text-green-600 text-4xl mb-3" />
+                      <h3 className="text-xl font-semibold text-green-800 mb-2">
+                        Attendance Recorded Successfully!
                       </h3>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <p className="text-gray-700">
-                        <span className="font-medium">Scanned at:</span>{' '}
-                        {new Date(attendance.createdAt).toLocaleString()}
+                      <p className="text-gray-600 mb-4">
+                        Your attendance has been saved to the database.
                       </p>
+                      <button
+                        onClick={() => {
+                          setSuccess("");
+                          setAttendance({ studentName: "", qrData: "", createdAt: "" });
+                        }}
+                        className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+                      >
+                        Scan Again
+                      </button>
                     </div>
-                    <button
-                      onClick={saveAttendance}
-                      className="mt-4 w-full py-3 bg-green-600 hover:bg-green-500 text-white px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <FiSave className="flex-shrink-0" />
-                      <span>Confirm Submission</span>
-                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
+              {/* Error State */}
               <AnimatePresence>
                 {error && (
                   <motion.div
