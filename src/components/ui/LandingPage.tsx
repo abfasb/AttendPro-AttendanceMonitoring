@@ -39,7 +39,6 @@ const LandingPage = () => {
     }
   ];
 
-  // Trust Factors Section
   const trustStats = [
     { value: "99.9%", label: "Uptime Guarantee" },
     { value: "256-bit", label: "Encryption" },
@@ -49,7 +48,6 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
-      {/* Modern Navigation */}
       <nav className="fixed w-full bg-white/90 backdrop-blur-md z-50 border-b border-slate-100">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -63,8 +61,7 @@ const LandingPage = () => {
               <span className="text-xl font-bold text-slate-900">AttendPro</span>
             </motion.div>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex gap-8">
+            <div className="hidden md:flex gap-8 items-center">
               {['Features', 'Solutions', 'Resources', 'Contact'].map((item) => (
                 <motion.button
                   key={item}
@@ -74,6 +71,19 @@ const LandingPage = () => {
                   {item}
                 </motion.button>
               ))}
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Signin
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Signup
+              </motion.button>
             </div>
 
             <motion.button
@@ -84,10 +94,37 @@ const LandingPage = () => {
               {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
             </motion.button>
           </div>
+
+          {isMenuOpen && (
+            <div className="mt-4 md:hidden">
+              <div className="flex flex-col gap-4">
+                {['Features', 'Solutions', 'Resources', 'Contact'].map((item) => (
+                  <motion.button
+                    key={item}
+                    whileHover={{ y: -2 }}
+                    className="text-slate-600 hover:text-indigo-600 transition-colors font-medium text-left"
+                  >
+                    {item}
+                  </motion.button>
+                ))}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  className="px-6 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors text-left"
+                >
+                  Signin
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-left"
+                >
+                  Signup
+                </motion.button>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
         <div className="container mx-auto flex flex-col lg:flex-row items-center gap-16">
           <div className="lg:w-1/2">
@@ -130,7 +167,6 @@ const LandingPage = () => {
             </motion.div>
           </div>
 
-          {/* Interactive Feature Showcase */}
           <div className="lg:w-1/2 relative">
             <motion.div 
               className="bg-white rounded-3xl shadow-2xl p-8 border border-slate-100"
@@ -173,7 +209,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Trust & Security Section */}
       <section className="py-20 bg-gradient-to-br from-indigo-600 to-emerald-600 text-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-16">
@@ -196,7 +231,6 @@ const LandingPage = () => {
             ))}
           </div>
 
-          {/* Client Logos Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 opacity-90">
             {['University', 'Tech Corp', 'Hospital', 'Government'].map((client, index) => (
               <motion.div
@@ -211,7 +245,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Workflow Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-16">Streamlined Workflow</h2>
@@ -236,7 +269,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Enhanced Footer */}
       <footer className="bg-slate-900 text-slate-300">
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-4 gap-8 border-b border-slate-800 pb-12">

@@ -16,6 +16,11 @@ interface QRCodeItem {
   imageUrl?: string;
 }
 
+const handleLogout = () => {
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+};
+
 const Dashboard: React.FC = () => {
   const [qrTitle, setQrTitle] = useState<string>("");
   const [expirationTime, setExpirationTime] = useState<string>("");
@@ -46,28 +51,31 @@ const Dashboard: React.FC = () => {
       toast.error("Please provide a title and expiration time.");
       return;
     }
-  
-    const currentTime = new Date().toISOString();
-  
+
+    const currentTime = new Date();
+    const selectedExpirationTime = new Date(expirationTime);
+
+    if (selectedExpirationTime <= currentTime) {
+      toast.error("Expiration time must be in the future.");
+      return;
+    }
+
     try {
-      // 1. First create the Firestore document to get the ID
       const qrDocRef = await addDoc(qrCollectionRef, {
         title: qrTitle,
-        createdAt: currentTime,
+        createdAt: currentTime.toISOString(),
         expiresAt: expirationTime,
         status: "active",
-        imageUrl: "" // Temporary empty value
+        imageUrl: ""
       });
-  
-      // 2. Create QR payload WITH THE DOCUMENT ID
+
       const qrPayload = {
-        id: qrDocRef.id, // This is the critical missing piece
+        id: qrDocRef.id,
         title: qrTitle,
-        createdAt: currentTime,
+        createdAt: currentTime.toISOString(),
         expiresAt: expirationTime
       };
-  
-      // 3. Generate QR code with the complete payload
+
       const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), {
         width: 300,
         margin: 2,
@@ -76,19 +84,17 @@ const Dashboard: React.FC = () => {
           light: "#ffffff",
         },
       });
-  
-      // 4. Upload image to storage
+
       const response = await fetch(qrDataUrl);
       const blob = await response.blob();
-      const storageRef = ref(storage, `qrCodes/${qrDocRef.id}.png`); // Use document ID as filename
+      const storageRef = ref(storage, `qrCodes/${qrDocRef.id}.png`);
       const uploadTask = await uploadBytes(storageRef, blob);
       const downloadUrl = await getDownloadURL(uploadTask.ref);
-  
-      // 5. Update the document with image URL
+
       await updateDoc(qrDocRef, {
         imageUrl: downloadUrl
       });
-  
+
       setQrCodeUrl(qrDataUrl);
       setShowQRCode(true);
       toast.success("QR Code saved successfully!");
@@ -116,8 +122,8 @@ const Dashboard: React.FC = () => {
   const downloadQRCode = async (url: string) => {
     try {
       const link = document.createElement("a");
-      link.href = url; 
-      link.target = "_blank"; 
+      link.href = url;
+      link.target = "_blank";
       link.download = "qr_code.png";
       link.click();
     } catch (err) {
@@ -126,10 +132,24 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const isQRCodeValid = (expiresAt: string) => {
+    const currentTime = new Date();
+    const expirationTime = new Date(expiresAt);
+    return currentTime <= expirationTime;
+  };
+
   const columns: TableColumn<QRCodeItem>[] = [
     { name: "Title", selector: (row) => row.title, sortable: true },
     { name: "Created At", selector: (row) => new Date(row.createdAt).toLocaleString() },
     { name: "Expires At", selector: (row) => new Date(row.expiresAt).toLocaleString() },
+    {
+      name: "Status",
+      cell: (row) => (
+        <span className={`px-2 py-1 rounded-full text-sm ${isQRCodeValid(row.expiresAt) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          {isQRCodeValid(row.expiresAt) ? 'Valid' : 'Expired'}
+        </span>
+      ),
+    },
     {
       name: "Actions",
       cell: (row) => (
@@ -137,6 +157,7 @@ const Dashboard: React.FC = () => {
           <button
             onClick={() => downloadQRCode(row.imageUrl!)}
             className="bg-green-600 text-white px-4 py-1 rounded-lg hover:bg-green-500"
+            disabled={!isQRCodeValid(row.expiresAt)}
           >
             Download
           </button>

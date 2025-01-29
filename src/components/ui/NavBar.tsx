@@ -61,7 +61,7 @@ const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
       </div>
 
       <div
-        className={`mt-6 space-y-4 transition-all duration-300 md:block ${
+        className={`mt-6 space-y-4 transition-all fixed left-4 duration-300 md:block ${
           isMenuOpen ? "block" : "hidden"
         }`}
       >

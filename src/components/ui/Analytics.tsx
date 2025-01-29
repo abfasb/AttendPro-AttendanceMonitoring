@@ -33,12 +33,19 @@ const Analytics: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const getQRCodeStatus = (expiresAt: string) => {
+    const currentTime = new Date();
+    const expirationTime = new Date(expiresAt);
+    return currentTime <= expirationTime ? "active" : "expired";
+  };
+
   const fetchQRCodes = async () => {
     const qrCollectionRef = collection(db, "qrCodes");
     const snapshot = await getDocs(qrCollectionRef);
     const qrData = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
+      status: getQRCodeStatus(doc.data().expiresAt), // Dynamically calculate status
     })) as QRCode[];
     setQRCodes(qrData);
   };
@@ -291,7 +298,9 @@ const Analytics: React.FC = () => {
                 {qrCodes.slice(0,4).map(qr => (
                   <div key={qr.id} className="p-3 bg-gray-50 rounded-lg">
                     <p className="font-medium text-gray-900 truncate">{qr.title}</p>
-                    <p className="text-sm text-gray-500">{qr.status}</p>
+                    <p className={`text-sm ${qr.status === "active" ? "text-green-600" : "text-red-600"}`}>
+                      {qr.status}
+                    </p>
                   </div>
                 ))}
               </div>
