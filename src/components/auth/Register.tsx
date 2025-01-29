@@ -89,7 +89,7 @@ const Register: React.FC = () => {
                     type="text"
                     name="firstName"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    placeholder="John"
+                    placeholder="Enter First Name"
                     value={formData.firstName}
                     onChange={handleChange}
                     required
@@ -106,7 +106,7 @@ const Register: React.FC = () => {
                   type="text"
                   name="lastName"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Doe"
+                  placeholder="Enter Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
@@ -121,7 +121,7 @@ const Register: React.FC = () => {
                   type="email"
                   name="email"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="username@example.com"
+                  placeholder="email@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required

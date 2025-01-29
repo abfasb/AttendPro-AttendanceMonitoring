@@ -38,7 +38,6 @@ const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPa
       if (signInSuccess) {
         const user = auth.currentUser;
         if (user) {
-          // Wait for auth state to be fully updated
           await auth.authStateReady();
           
           const userDoc = await getDoc(doc(db, 'users', user.uid));
@@ -115,7 +114,7 @@ const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPa
             <div className="space-y-4">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
+                  Email 
                 </label>
                 <div className="relative">
                   <input
@@ -123,7 +122,7 @@ const Login: React.FC<LoginProps> = ({ signInWithGoogle, signInWithUsernameAndPa
                     name="username"
                     type="text"
                     autoComplete="username"
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     value={formData.username}
                     onChange={handleChange}
