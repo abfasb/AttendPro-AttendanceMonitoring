@@ -211,6 +211,49 @@ const StudentPanel: React.FC = () => {
     startCamera(newMode);
   };
 
+  const SCAN_BOX_SIZE = 250; // pixels
+  const SCAN_BOX_OFFSET = 50; // pixels from top
+
+  const scanFrame = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const centerX = video.videoWidth / 2;
+    const centerY = video.videoHeight / 2;
+    const scanSize = Math.min(SCAN_BOX_SIZE, video.videoWidth * 0.6);
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = context.getImageData(
+      centerX - scanSize/2,
+      centerY - scanSize/2 + SCAN_BOX_OFFSET,
+      scanSize,
+      scanSize
+    );
+
+    const qrCode = jsQR(imageData.data, scanSize, scanSize);
+    if (qrCode) {
+      handleScan(qrCode.data);
+    }
+
+    requestAnimationFrame(scanFrame);
+  }, [handleScan]);
+
+  useEffect(() => {
+    if (isCameraVisible) {
+      const scanInterval = requestAnimationFrame(scanFrame);
+      return () => cancelAnimationFrame(scanInterval);
+    }
+  }, [isCameraVisible, scanFrame]);
+
+
   useEffect(() => {
     if (isCameraVisible) {
       startCamera(cameraFacingMode);
@@ -354,20 +397,27 @@ const StudentPanel: React.FC = () => {
                     animate={{ opacity: 1 }}
                     className="mt-6 aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg"
                   >
-                    {isCameraLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-                      </div>
-                    )}
-
-                    {/* Scanning Overlay */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="relative w-full h-full">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-[70%] aspect-square border-4 border-indigo-400/50 rounded-xl animate-pulse">
-                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-white text-sm">
-                              Align QR code within frame
+                        <div 
+                          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                          style={{ marginTop: `${SCAN_BOX_OFFSET}px` }}
+                        >
+                          <div 
+                            className="border-2 border-green-400 rounded-lg animate-pulse"
+                            style={{
+                              width: `${SCAN_BOX_SIZE}px`,
+                              height: `${SCAN_BOX_SIZE}px`,
+                            }}
+                          >
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-white text-sm text-center">
+                              Align QR code here
                             </div>
+                            {/* Corner brackets */}
+                            <div className="absolute -left-1 -top-1 w-6 h-6 border-l-2 border-t-2 border-green-400" />
+                            <div className="absolute -right-1 -top-1 w-6 h-6 border-r-2 border-t-2 border-green-400" />
+                            <div className="absolute -left-1 -bottom-1 w-6 h-6 border-l-2 border-b-2 border-green-400" />
+                            <div className="absolute -right-1 -bottom-1 w-6 h-6 border-r-2 border-b-2 border-green-400" />
                           </div>
                         </div>
                       </div>
