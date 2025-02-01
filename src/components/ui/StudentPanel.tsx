@@ -423,7 +423,6 @@ const StudentPanel: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Camera Switch Button */}
                     {hasMultipleCameras && (
                       <button
                         onClick={toggleCameraFacing}
