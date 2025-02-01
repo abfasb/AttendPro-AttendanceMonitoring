@@ -69,17 +69,20 @@ const StudentPanel: React.FC = () => {
     });
   };
 
-  const scanImageForQR = async (img: HTMLImageElement): Promise<string | null> => {
+  const scanImageForQR = (img: HTMLImageElement): string | null => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
-
+  
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
     
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+    const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
+    
     return qrCode?.data || null;
   };
 
@@ -178,6 +181,7 @@ const StudentPanel: React.FC = () => {
     }
   };
 
+
   const startCamera = async (facingMode: "user" | "environment") => {
     if (!videoRef.current) return;
 
@@ -188,10 +192,14 @@ const StudentPanel: React.FC = () => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode }
+        video: {
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        }
       });
 
-      // Check for multiple cameras
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setHasMultipleCameras(videoDevices.length > 1);
@@ -211,8 +219,12 @@ const StudentPanel: React.FC = () => {
     startCamera(newMode);
   };
 
-  const SCAN_BOX_SIZE = 250; // pixels
-  const SCAN_BOX_OFFSET = 50; // pixels from top
+  const SCAN_BOX_SIZE = 250; 
+  const SCAN_BOX_OFFSET = 50; 
+  const SCAN_BOX_RELATIVE_SIZE = 0.6; 
+  const SCAN_INTERVAL = 300; 
+  const MIN_QR_SIZE = 150; 
+  const REQUIRED_CONFIDENCE = 0.7;
 
   const scanFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -222,29 +234,51 @@ const StudentPanel: React.FC = () => {
     if (!context) return;
 
     const video = videoRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+
+    const { videoWidth, videoHeight } = video;
+
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+
+    context.drawImage(video, 0, 0, videoWidth, videoHeight);
+
+    const minDimension = Math.min(videoWidth, videoHeight);
+    const scanSize = Math.max(MIN_QR_SIZE, minDimension * SCAN_BOX_RELATIVE_SIZE);
     
     const centerX = video.videoWidth / 2;
     const centerY = video.videoHeight / 2;
-    const scanSize = Math.min(SCAN_BOX_SIZE, video.videoWidth * 0.6);
 
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     const imageData = context.getImageData(
-      centerX - scanSize/2,
-      centerY - scanSize/2 + SCAN_BOX_OFFSET,
+      centerX - scanSize / 2,
+      centerY - scanSize / 2,
       scanSize,
       scanSize
     );
 
-    const qrCode = jsQR(imageData.data, scanSize, scanSize);
-    if (qrCode) {
-      handleScan(qrCode.data);
+    try {
+      const qrCode = jsQR(
+        imageData.data,
+        scanSize,
+        scanSize,
+        {
+          inversionAttempts: "attemptBoth",
+          canOverwriteImage: false,
+        }
+      );
+
+      if (qrCode && qrCode.confidence > REQUIRED_CONFIDENCE) {
+        handleScan(qrCode.data);
+      }
+    } catch (error) {
+      console.error("QR scanning error:", error);
     }
 
-    requestAnimationFrame(scanFrame);
-  }, [handleScan]);
+     setTimeout(() => {
+      requestAnimationFrame(scanFrame);
+    }, SCAN_INTERVAL);
+  }, [handleScan, isProcessingScan]);
 
   useEffect(() => {
     if (isCameraVisible) {
@@ -390,38 +424,51 @@ const StudentPanel: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Camera Preview */}
+
                 {isCameraVisible && (
                   <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="mt-6 aspect-video bg-black rounded-xl overflow-hidden relative shadow-lg"
                   >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative w-full h-full">
-                        <div 
-                          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                          style={{ marginTop: `${SCAN_BOX_OFFSET}px` }}
-                        >
-                          <div 
-                            className="border-2 border-green-400 rounded-lg animate-pulse"
-                            style={{
-                              width: `${SCAN_BOX_SIZE}px`,
-                              height: `${SCAN_BOX_SIZE}px`,
-                            }}
-                          >
-                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-white text-sm text-center">
-                              Align QR code here
+                     <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="relative w-full h-full">
+                          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <div className="relative">
+                              {/* Animated scanning beam */}
+                              <div className="absolute top-0 left-0 w-full h-1 bg-green-400 animate-scan-beam rounded-full" />
+                              
+                              {/* Scan box with enhanced styling */}
+                              <div 
+                                className="border-2 border-green-400 rounded-lg"
+                                style={{
+                                  width: `${scanSize}px`,
+                                  height: `${scanSize}px`,
+                                  boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)'
+                                }}
+                              >
+                                {/* Corner brackets */}
+                                <div className="absolute -left-1 -top-1 w-6 h-6 border-l-2 border-t-2 border-green-400" />
+                                <div className="absolute -right-1 -top-1 w-6 h-6 border-r-2 border-t-2 border-green-400" />
+                                <div className="absolute -left-1 -bottom-1 w-6 h-6 border-l-2 border-b-2 border-green-400" />
+                                <div className="absolute -right-1 -bottom-1 w-6 h-6 border-r-2 border-b-2 border-green-400" />
+                              </div>
+
+                              {/* Help text */}
+                              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-center">
+                                <p className="text-white text-sm mb-2">
+                                  Align QR code within the frame
+                                </p>
+                                <div className="flex items-center justify-center space-x-2 text-green-400">
+                                  <FiInfo className="flex-shrink-0" />
+                                  <span className="text-xs">Ensure good lighting and focus</span>
+                                </div>
+                              </div>
                             </div>
-                            {/* Corner brackets */}
-                            <div className="absolute -left-1 -top-1 w-6 h-6 border-l-2 border-t-2 border-green-400" />
-                            <div className="absolute -right-1 -top-1 w-6 h-6 border-r-2 border-t-2 border-green-400" />
-                            <div className="absolute -left-1 -bottom-1 w-6 h-6 border-l-2 border-b-2 border-green-400" />
-                            <div className="absolute -right-1 -bottom-1 w-6 h-6 border-r-2 border-b-2 border-green-400" />
                           </div>
                         </div>
                       </div>
-                    </div>
+                      
 
                     {hasMultipleCameras && (
                       <button
