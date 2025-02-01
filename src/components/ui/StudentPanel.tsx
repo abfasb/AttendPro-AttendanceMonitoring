@@ -227,55 +227,49 @@ const StudentPanel: React.FC = () => {
   const REQUIRED_CONFIDENCE = 0.7;
 
   const scanFrame = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-
+    if (!videoRef.current || !canvasRef.current || isProcessingScan) return;
+  
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
+    const context = canvas.getContext('2d');
+    if (!context || !videoRef.current.videoWidth) return;
+  
     const video = videoRef.current;
-
     const { videoWidth, videoHeight } = video;
-
+    
     canvas.width = videoWidth;
     canvas.height = videoHeight;
-
     context.drawImage(video, 0, 0, videoWidth, videoHeight);
-
+  
     const minDimension = Math.min(videoWidth, videoHeight);
     const scanSize = Math.max(MIN_QR_SIZE, minDimension * SCAN_BOX_RELATIVE_SIZE);
-    
-    const centerX = video.videoWidth / 2;
-    const centerY = video.videoHeight / 2;
-
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+    const centerX = videoWidth / 2;
+    const centerY = videoHeight / 2;
+  
     const imageData = context.getImageData(
       centerX - scanSize / 2,
       centerY - scanSize / 2,
       scanSize,
       scanSize
     );
-
+  
     try {
       const qrCode = jsQR(
         imageData.data,
         scanSize,
         scanSize,
         {
-          inversionAttempts: "attemptBoth",
-          canOverwriteImage: false,
+          inversionAttempts: 'attemptBoth',
         }
       );
-
-      if (qrCode && qrCode.confidence > REQUIRED_CONFIDENCE) {
+  
+      if (qrCode) {
         handleScan(qrCode.data);
       }
     } catch (error) {
-      console.error("QR scanning error:", error);
+      console.error('QR scanning error:', error);
     }
-
-     setTimeout(() => {
+  
+    setTimeout(() => {
       requestAnimationFrame(scanFrame);
     }, SCAN_INTERVAL);
   }, [handleScan, isProcessingScan]);
@@ -442,8 +436,8 @@ const StudentPanel: React.FC = () => {
                               <div 
                                 className="border-2 border-green-400 rounded-lg"
                                 style={{
-                                  width: `${scanSize}px`,
-                                  height: `${scanSize}px`,
+                                  width: `${SCAN_BOX_SIZE}px`,
+                                  height: `${SCAN_BOX_SIZE}px`,
                                   boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)'
                                 }}
                               >
