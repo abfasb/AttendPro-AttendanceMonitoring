@@ -391,7 +391,6 @@ const StudentPanel: React.FC = () => {
                     )}
                   </button>
 
-                  {/* File Upload Dropzone */}
                   <div className="w-full md:flex-1">
                     <div {...getRootProps()} className="cursor-pointer">
                       <input {...getInputProps()} />

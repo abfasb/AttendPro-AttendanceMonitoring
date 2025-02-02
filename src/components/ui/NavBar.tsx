@@ -12,7 +12,6 @@ const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
   const navItems = [
     { name: "Dashboard", icon: <FaTachometerAlt className="h-5 w-5" /> },
     { name: "Attendance Overview", icon: <FaChartBar className="h-5 w-5" /> },
-    { name: "Scan QR Code", icon: <FaQrcode className="h-5 w-5" /> },
     { name: "Student List", icon: <FaUsers className="h-5 w-5" /> },
     { name: "Reports & Insights", icon: <FaFileAlt className="h-5 w-5" /> },
     { name: "Settings", icon: <FaCog className="h-5 w-5" /> },
