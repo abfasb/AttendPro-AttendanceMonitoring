@@ -7,6 +7,7 @@ import StudentPage from './pages/Student/StudentPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import LandingPage from './components/ui/LandingPage'
 import UnauthorizedPage from './pages/UnAuthorizedPage'
+import NotFound from './components/ui/NotFound'
 
 function App() {
 
@@ -31,6 +32,8 @@ function App() {
         <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="student"/>}>
           <Route path='/my-account/student/*' element={<StudentPage />}/>
         </Route>
+
+        <Route path='*' element={<NotFound />} />
         
       </Routes>
     </Router>

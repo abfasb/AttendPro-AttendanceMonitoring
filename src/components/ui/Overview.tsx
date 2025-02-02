@@ -22,7 +22,9 @@ interface AttendanceRecord {
 
 interface UserData {
   uid: string;
-  firstName?: string;
+  displayName?: string;
+  FirstName?: string;
+  LastName?: string;
   email?: string;
   photoURL?: string;
 }
@@ -52,35 +54,34 @@ const Overview: React.FC = () => {
     try {
       setLoading(true);
       const attendanceCollectionRef = collection(db, "attendances");
-      const q = query(
-        attendanceCollectionRef,
-        where("qrCodeId", "==", qrCodeId)
-      );
+      const q = query(attendanceCollectionRef, where("qrCodeId", "==", qrCodeId));
       const snapshot = await getDocs(q);
   
       const recordsPromises = snapshot.docs.map(async (attendanceDoc) => {
         const data = attendanceDoc.data();
-        console.log(data);
-        
         let studentName = "Unknown Student";
+  
         try {
           const userRef = doc(db, "users", data.studentId);
           const userDoc = await getDoc(userRef);
-          const userData = userDoc.data() as UserData;
-          studentName = data.studentName || studentName;
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as UserData;
+            console.log(userData);
+            studentName = `${userData.displayName || userData.FirstName + ' ' + userData.LastName}  `; 
+          }
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
-
+  
         return {
           id: attendanceDoc.id,
           studentId: data.studentId,
-          studentName,
+          studentName, 
           qrCodeId: data.qrCodeId,
           createdAt: data.createdAt
         } as AttendanceRecord;
       });
-
+  
       const records = await Promise.all(recordsPromises);
       setAttendanceRecords(records);
     } catch (err) {
@@ -89,6 +90,7 @@ const Overview: React.FC = () => {
       setLoading(false);
     }
   };
+  
       
   const handleQRCodeClick = async (qrCode: QRCode) => {
     setSelectedQRCode(qrCode);

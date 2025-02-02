@@ -5,6 +5,7 @@ import { collection, query, where, getDocs, setDoc, doc, getDoc } from 'firebase
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Login from '../components/auth/Login';
+import bcrypt from 'bcryptjs';
 
 const provider = new GoogleAuthProvider();
 const auth = getAuth(app);
@@ -99,14 +100,15 @@ const LoginPage: React.FC = () => {
   
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
+      
   
       if (!userData.password) {
         toast.error('Account configuration error', { position: 'top-right', autoClose: 5000 });
         return false;
       }
   
-      const isPasswordCorrect = password === userData.password;
   
+      const isPasswordCorrect = await bcrypt.compare(password, userData.password);
       if (!isPasswordCorrect) {
         toast.error('Incorrect password', { position: 'top-right', autoClose: 5000 });
         return false;
