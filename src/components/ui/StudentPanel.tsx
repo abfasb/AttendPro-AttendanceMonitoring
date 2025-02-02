@@ -340,7 +340,6 @@ const StudentPanel: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
-          {/* Header Section */}
           <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 md:p-8">
             <div className="flex items-center justify-between">
               <div>
@@ -363,18 +362,15 @@ const StudentPanel: React.FC = () => {
           </div>
 
           <div className="p-6 md:p-8 space-y-8">
-            {/* Profile Section */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FiUser className="mr-2 text-indigo-600" />
                 Student Profile
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* ... (keep existing profile content) ... */}
               </div>
             </div>
 
-            {/* Scanner Section */}
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 border border-gray-200">
                 <div className="flex flex-col md:flex-row gap-4 items-start">
@@ -429,10 +425,8 @@ const StudentPanel: React.FC = () => {
                         <div className="relative w-full h-full">
                           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                             <div className="relative">
-                              {/* Animated scanning beam */}
                               <div className="absolute top-0 left-0 w-full h-1 bg-green-400 animate-scan-beam rounded-full" />
                               
-                              {/* Scan box with enhanced styling */}
                               <div 
                                 className="border-2 border-green-400 rounded-lg"
                                 style={{
@@ -441,7 +435,6 @@ const StudentPanel: React.FC = () => {
                                   boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)'
                                 }}
                               >
-                                {/* Corner brackets */}
                                 <div className="absolute -left-1 -top-1 w-6 h-6 border-l-2 border-t-2 border-green-400" />
                                 <div className="absolute -right-1 -top-1 w-6 h-6 border-r-2 border-t-2 border-green-400" />
                                 <div className="absolute -left-1 -bottom-1 w-6 h-6 border-l-2 border-b-2 border-green-400" />
