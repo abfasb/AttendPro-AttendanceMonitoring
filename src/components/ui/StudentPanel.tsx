@@ -503,7 +503,6 @@ const StudentPanel: React.FC = () => {
                 )}
               </div>
 
-              {/* Processing State */}
               <AnimatePresence>
                 {isProcessingScan && (
                   <motion.div
@@ -518,7 +517,6 @@ const StudentPanel: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Success State */}
               <AnimatePresence>
                 {success && (
                   <motion.div
@@ -549,7 +547,6 @@ const StudentPanel: React.FC = () => {
                 )}
               </AnimatePresence>
 
-              {/* Error State */}
               <AnimatePresence>
                 {error && (
                   <motion.div
