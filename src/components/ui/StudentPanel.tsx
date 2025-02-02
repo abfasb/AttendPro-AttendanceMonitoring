@@ -414,6 +414,34 @@ const StudentPanel: React.FC = () => {
                   </div>
                 </div>
 
+                  {attendance.qrData && !success && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-indigo-50 rounded-xl p-6 border border-indigo-200"
+                    >
+                      <div className="flex flex-col md:flex-row items-center justify-between">
+                        <div className="mb-4 md:mb-0">
+                          <h3 className="text-lg font-semibold text-indigo-800 flex items-center">
+                            <FiDribbble className="mr-2" />
+                            Valid QR Code Detected!
+                          </h3>
+                          <p className="text-gray-600 mt-1">
+                            Click below to save your attendance
+                          </p>
+                        </div>
+                        <button
+                          onClick={saveAttendance}
+                          disabled={isProcessingScan}
+                          className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <FiSave className="flex-shrink-0" />
+                          <span>Save Attendance</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
 
                 {isCameraVisible && (
                   <motion.div 
