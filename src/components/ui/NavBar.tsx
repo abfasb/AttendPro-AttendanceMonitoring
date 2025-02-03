@@ -14,7 +14,7 @@ const NavBar: React.FC<NavBarProps> = ({ onSelect, activeSection }) => {
     { name: "Attendance Overview", icon: <FaChartBar className="h-5 w-5" /> },
     { name: "Student List", icon: <FaUsers className="h-5 w-5" /> },
     { name: "Reports & Insights", icon: <FaFileAlt className="h-5 w-5" /> },
-    { name: "Settings", icon: <FaCog className="h-5 w-5" /> },
+     {/* ... { name: "Settings", icon: <FaCog className="h-5 w-5" /> }  this part is for the settings i will use it later*/}
   ];
 
   return (
