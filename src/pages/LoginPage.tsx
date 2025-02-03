@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { app, db } from '../config/config';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, query, where, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -13,34 +13,31 @@ const auth = getAuth(app);
 const LoginPage: React.FC = () => {
   const [loginError, setLoginError] = useState<string>('');
   const [showRoleSelection, setShowRoleSelection] = useState<boolean>(false);
-  const [selectedRole, setSelectedRole] = useState<string>('student');
+  const [pendingUser, setPendingUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        console.log('User signed in:', user);
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          finalizeLogin(userData);
+        } else {
+          setPendingUser(user);
+          setShowRoleSelection(true);
+        }
       }
     });
+
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      console.log('Google user:', user);
-      
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        console.log('Existing user data:', userData);
-        finalizeLogin(userData, user.uid);
-      } else {
-        setShowRoleSelection(true);
-      }
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error('Google login failed:', error);
       toast.error('Google login failed. Please try again.', { position: 'top-right', autoClose: 5000 });
@@ -49,40 +46,48 @@ const LoginPage: React.FC = () => {
 
   const saveUserRole = async (role: string) => {
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
+      if (!pendingUser) throw new Error('No pending user');
       
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', pendingUser.uid);
       await setDoc(userRef, {
-        uid: user.uid,
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
+        uid: pendingUser.uid,
+        displayName: pendingUser.displayName,
+        email: pendingUser.email,
+        photoURL: pendingUser.photoURL,
         role,
-      }, { merge: true });
-      
-      finalizeLogin({ role }, user.uid);
+      });
+
+      finalizeLogin({ role });
+      setShowRoleSelection(false);
+      setPendingUser(null);
     } catch (error) {
       console.error('Error saving user role:', error);
       toast.error('Failed to save role. Try again.', { position: 'top-right', autoClose: 5000 });
     }
   };
 
-  const finalizeLogin = (userData: any, uid: string) => {
+  const finalizeLogin = (userData: any) => {
+    if (!pendingUser) return;
+
     const userState = {
-      uid,
-      displayName: auth.currentUser?.displayName || '',
-      email: auth.currentUser?.email || '',
-      photoURL: auth.currentUser?.photoURL || '',
+      uid: pendingUser.uid,
+      displayName: pendingUser.displayName,
+      email: pendingUser.email,
+      photoURL: pendingUser.photoURL,
       role: userData.role || 'student'
     };
-    
+
     localStorage.setItem('user', JSON.stringify(userState));
-    console.log('Local storage set:', userState);
-    
     const redirectPath = userData.role === 'instructor' ? '/my-account/instructor' : '/my-account/student';
     navigate(redirectPath);
-    window.location.reload();
+  };
+
+  const handleCloseRoleSelection = async () => {
+    setShowRoleSelection(false);
+    if (pendingUser) {
+      await signOut(auth);
+      setPendingUser(null);
+    }
   };
 
   const signInWithUsernameAndPassword = async (email: string, password: string): Promise<boolean> => {
@@ -131,23 +136,57 @@ const LoginPage: React.FC = () => {
     }
   };
   
-
   return (
     <>
-      {showRoleSelection ? (
-        <div className="role-selection-modal">
-          <h2>Select Your Role</h2>
-          <button onClick={() => saveUserRole('student')}>Student</button>
-          <button onClick={() => saveUserRole('instructor')}>Instructor</button>
+      {showRoleSelection && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <h2>Select Your Role</h2>
+            <div style={{ marginTop: '1rem' }}>
+              <button 
+                style={{ margin: '0.5rem', padding: '0.5rem 2rem' }}
+                onClick={() => saveUserRole('student')}
+              >
+                Student
+              </button>
+              <button 
+                style={{ margin: '0.5rem', padding: '0.5rem 2rem' }}
+                onClick={() => saveUserRole('instructor')}
+              >
+                Instructor
+              </button>
+            </div>
+            <button 
+              style={{ marginTop: '1rem', padding: '0.25rem 1rem' }}
+              onClick={handleCloseRoleSelection}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-      ) : (
-        <Login
+      )}
+      
+      <Login
         signInWithGoogle={signInWithGoogle}
         signInWithUsernameAndPassword={signInWithUsernameAndPassword} 
         loginError={loginError}
       />
-  
-      )}
     </>
   );
 };

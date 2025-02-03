@@ -159,7 +159,7 @@ const Dashboard: React.FC = () => {
             className="bg-green-600 text-white px-4 py-1 rounded-lg hover:bg-green-500"
             disabled={!isQRCodeValid(row.expiresAt)}
           >
-            Download
+            View Qr
           </button>
           <button
             onClick={() => deleteQRCode(row.id)}
@@ -218,14 +218,6 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {showQRCode && qrCodeUrl && (
-        <div className="mt-6 p-4 bg-white rounded shadow">
-          <h3 className="text-xl font-semibold text-gray-700">Generated QR Code</h3>
-          <div id="qr-code-preview" className="w-48 h-48 bg-gray-200 mt-4 flex justify-center items-center">
-            <img src={qrCodeUrl} alt="QR Code" />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

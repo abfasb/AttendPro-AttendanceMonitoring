@@ -468,7 +468,6 @@ const StudentPanel: React.FC = () => {
                                 <div className="absolute -right-1 -bottom-1 w-6 h-6 border-r-2 border-b-2 border-green-400" />
                               </div>
 
-                              {/* Help text */}
                               <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-center">
                                 <p className="text-white text-sm mb-2">
                                   Align QR code within the frame
@@ -546,6 +545,8 @@ const StudentPanel: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              
 
               <AnimatePresence>
                 {error && (
