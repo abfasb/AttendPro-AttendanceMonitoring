@@ -10,7 +10,7 @@ import UnauthorizedPage from './pages/UnAuthorizedPage'
 import NotFound from './components/ui/NotFound'
 
 function App() {
-
+  
     const isAuthenticated = !!localStorage.getItem("user");
 
   return (
@@ -34,7 +34,7 @@ function App() {
         </Route>
 
         <Route path='*' element={<NotFound />} />
-        
+
       </Routes>
     </Router>
   )
