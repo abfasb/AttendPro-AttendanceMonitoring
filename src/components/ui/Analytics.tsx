@@ -19,6 +19,11 @@ interface AttendanceRecord {
   qrCodeId: string;
   createdAt: string;
 }
+interface qrCode{
+  id: string;
+  realname: string;
+  sala: number
+}
 
 interface UserData {
   uid: string;
