@@ -50,7 +50,7 @@ const Analytics: React.FC = () => {
     const qrData = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-      status: getQRCodeStatus(doc.data().expiresAt), // Dynamically calculate status
+      status: getQRCodeStatus(doc.data().expiresAt), 
     })) as QRCode[];
     setQRCodes(qrData);
   };
