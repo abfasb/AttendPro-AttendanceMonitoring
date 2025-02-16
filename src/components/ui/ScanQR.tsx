@@ -3,8 +3,9 @@ import React, { useState } from "react";
 const ScanQR : React.FC = () => {
   
   return (
-    <div>
-     <h1>hello this is qr code</h1>
+    <div className="flex justify-center items-center">
+      <div>First Grid</div>
+      <div>Second Grid</div>
     </div>
   );
 };
