@@ -14,6 +14,7 @@ interface QRCodeItem {
   expiresAt: string;
   status: string;
   imageUrl?: string;
+  dateCreated?:string;
 }
 
 
