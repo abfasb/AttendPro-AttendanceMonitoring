@@ -16,10 +16,6 @@ interface QRCodeItem {
   imageUrl?: string;
 }
 
-const handleLogout = () => {
-  localStorage.removeItem('user');
-  window.location.href = '/login';
-};
 
 const Dashboard: React.FC = () => {
   const [qrTitle, setQrTitle] = useState<string>("");
