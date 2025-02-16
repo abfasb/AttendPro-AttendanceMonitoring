@@ -119,6 +119,18 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const deleteQRCode2 = async (id: string | undefined) => {
+    if (!id) return;
+    try {
+      await deleteDoc(doc(db, "qrCodes", id));
+      toast.success("QR Code deleted successfully!");
+      fetchQRCodes();
+    } catch (err) {
+      toast.error("Error deleting QR Code.");
+      console.error("Error deleting QR Code:", err);
+    }
+  };
+
   const downloadQRCode = async (url: string) => {
     try {
       const link = document.createElement("a");

@@ -19,11 +19,6 @@ interface AttendanceRecord {
   qrCodeId: string;
   createdAt: string;
 }
-interface qrCode{
-  id: string;
-  realname: string;
-  sala: number
-}
 
 interface UserData {
   uid: string;
@@ -50,7 +45,7 @@ const Analytics: React.FC = () => {
     const qrData = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-      status: getQRCodeStatus(doc.data().expiresAt), 
+      status: getQRCodeStatus(doc.data().expiresAt), // Dynamically calculate status
     })) as QRCode[];
     setQRCodes(qrData);
   };
@@ -157,6 +152,7 @@ const Analytics: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Stat Cards */}
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-100 rounded-lg">
@@ -209,6 +205,7 @@ const Analytics: React.FC = () => {
 
         {!loading && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Attendance Trends */}
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Attendance Trends</h2>
               <div className="h-80">
@@ -289,6 +286,7 @@ const Analytics: React.FC = () => {
               </div>
             </div>
 
+            {/* Most Used QR Code */}
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Most Used QR Code</h2>
               <div className="flex items-center justify-center p-4 bg-indigo-50 rounded-lg">
@@ -308,6 +306,7 @@ const Analytics: React.FC = () => {
               </div>
             </div>
 
+            {/* Recent Activity */}
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Attendance</h2>
               <div className="space-y-4">
